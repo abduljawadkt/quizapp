@@ -251,6 +251,33 @@ export async function updateEventSettings(formData: FormData) {
   redirect(`/admin/events/${data.eventId}?updated=settings`);
 }
 
+export async function deleteEvent(formData: FormData) {
+  const admin = await requireAdmin();
+  const eventId = String(formData.get("eventId") ?? "");
+  const confirmCode = String(formData.get("confirmCode") ?? "").trim().toUpperCase();
+  const event = await db.event.findUnique({ where: { id: eventId }, select: { id: true, title: true, joinCode: true } });
+
+  if (!event) redirect("/admin?error=delete");
+  if (confirmCode !== event.joinCode) redirect(`/admin/events/${event.id}?error=delete`);
+
+  await db.$transaction(async (tx) => {
+    await tx.auditLog.create({
+      data: {
+        adminId: admin.id,
+        action: "event.delete",
+        entity: "event",
+        entityId: event.id,
+        detail: `Deleted event ${event.title} (${event.joinCode})`,
+      },
+    });
+    await tx.event.delete({ where: { id: event.id } });
+  });
+
+  revalidateTag("events", "max");
+  revalidatePath("/admin");
+  redirect("/admin?deleted=event");
+}
+
 export async function updateManualVerdict(formData: FormData) {
   const admin = await requireAdmin();
   const responseId = String(formData.get("responseId") ?? "");

@@ -94,6 +94,12 @@ button:disabled { opacity: .48; cursor: not-allowed; transform: none; box-shadow
 .button.primary:hover, .nav .primary:hover, button.primary:hover { box-shadow: 0 16px 34px rgba(217,148,38,.28); }
 .button.ghost, button.ghost { background: #fff; color: var(--muted); }
 .button.danger, button.danger { color: var(--red); border-color: rgba(194,65,59,.2); background: #fff8f6; }
+.danger-zone {
+  border-color: rgba(194,65,59,.22);
+  background:
+    linear-gradient(135deg, rgba(255,253,250,.94), rgba(255,248,246,.9)),
+    radial-gradient(circle at 96% 10%, rgba(194,65,59,.08), transparent 12rem);
+}
 
 .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 18px; }
 .grid > * { min-width: 0; }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarPlus, CheckCircle2, ExternalLink, FileQuestion, Lock, Pencil, Radio, Users } from "lucide-react";
+import { CalendarPlus, CheckCircle2, ExternalLink, FileQuestion, Lock, Pencil, Radio, Trash2, Users } from "lucide-react";
 import { createEvent, updateEventStatus } from "@/app/actions/admin";
 import { AdminTopbar } from "@/components/AdminTopbar";
 import { requireAdmin } from "@/lib/auth";
@@ -91,6 +91,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams?: 
             <Link className="button" href="/admin/questions"><FileQuestion size={16} /> Manage questions</Link>
           </div>
           {params.updated === "status" ? <p className="notice">Event status updated.</p> : null}
+          {params.deleted === "event" ? <p className="notice">Event deleted.</p> : null}
           {events.length ? (
             <div className="event-list">
               {events.map((event) => (
@@ -107,6 +108,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams?: 
                   <div className="row" style={{ justifyContent: "flex-end" }}>
                     <Link className="button" href={`/join/${event.joinCode}`}><ExternalLink size={16} /> Join</Link>
                     <Link className="button success" href={`/admin/events/${event.id}`}><Pencil size={16} /> Edit</Link>
+                    <Link className="button danger" href={`/admin/events/${event.id}#delete-event`}><Trash2 size={16} /> Delete</Link>
                     {["draft", "open", "closed"].map((status) => (
                       <form action={updateEventStatus} key={status}>
                         <input type="hidden" name="eventId" value={event.id} />

@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ExternalLink, FileQuestion, KeyRound, Lock, Medal, Radio, Save, Star, Trophy, Users } from "lucide-react";
+import { ExternalLink, FileQuestion, KeyRound, Lock, Medal, Radio, Save, Star, Trash2, Trophy, Users } from "lucide-react";
 import { CopyButton } from "@/components/CopyButton";
-import { updateEventSettings, updateEventStatus, updateManualVerdict } from "@/app/actions/admin";
+import { deleteEvent, updateEventSettings, updateEventStatus, updateManualVerdict } from "@/app/actions/admin";
 import { AdminTopbar } from "@/components/AdminTopbar";
 import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -113,6 +113,7 @@ export default async function EventDetailPage({
           </div>
           {query.updated === "settings" ? <p className="notice">Event settings saved.</p> : null}
           {query.updated === "status" ? <p className="notice">Event status updated.</p> : null}
+          {query.error === "delete" ? <p className="notice">Delete failed. Type the exact event code to confirm.</p> : null}
           <form action={updateEventSettings}>
             <input type="hidden" name="eventId" value={event.id} />
             <div className="row">
@@ -148,6 +149,26 @@ export default async function EventDetailPage({
               <span className="muted">Show answer sheet after completion</span>
             </label>
             <button type="submit" className="primary"><Save size={16} /> Save event</button>
+          </form>
+        </section>
+
+        <section className="card span-12 danger-zone" id="delete-event">
+          <div className="spread">
+            <div>
+              <h2>Delete Event</h2>
+              <p className="muted">This removes the event room, participant entries, attempts, submitted answers, and leaderboard history. The question bank stays available.</p>
+            </div>
+            <span className="pill closed">{event.joinCode}</span>
+          </div>
+          <form action={deleteEvent}>
+            <input type="hidden" name="eventId" value={event.id} />
+            <div className="row">
+              <div className="field" style={{ flex: 1, marginBottom: 0 }}>
+                <label htmlFor="confirmCode">Type event code to confirm</label>
+                <input id="confirmCode" name="confirmCode" placeholder={event.joinCode} autoComplete="off" required />
+              </div>
+              <button className="danger" type="submit"><Trash2 size={16} /> Delete event</button>
+            </div>
           </form>
         </section>
 

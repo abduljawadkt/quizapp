@@ -187,7 +187,9 @@ The event detail page shows:
 
 Use this page during the live quiz to monitor progress, change status, edit event title, change participant limit, and control whether answers are shown after completion.
 
-Visible `Edit` buttons are available from the admin dashboard event list. Question edit buttons are available from `/admin/questions`.
+Visible `Edit` and `Delete` buttons are available from the admin dashboard event list. Question edit buttons are available from `/admin/questions`.
+
+Deleting an event removes that quiz room, participants, attempts, submitted answers, and leaderboard history. It does not delete the reusable question bank. To delete an event, open it, scroll to `Delete Event`, type the event code, and submit.
 
 ## 8. Manual Answer Review
 
