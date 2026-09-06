@@ -1,0 +1,182 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  role         String   @default("OWNER")
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  reviews AuditLog[]
+}
+
+model QuizSet {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  questions   Question[]
+  events      Event[]
+}
+
+model Question {
+  id               String   @id @default(cuid())
+  quizSetId        String
+  prompt           String
+  correctDisplayEn String
+  correctDisplayAr String?
+  correctDisplayMl String?
+  category         String?
+  difficulty       String   @default("easy")
+  points           Int      @default(10)
+  sortOrder        Int      @default(0)
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  quizSet        QuizSet         @relation(fields: [quizSetId], references: [id], onDelete: Cascade)
+  answerVariants AnswerVariant[]
+  clues          Clue[]
+  responses      Response[]
+  clueReveals    ClueReveal[]
+
+  @@index([quizSetId, sortOrder])
+}
+
+model AnswerVariant {
+  id         String   @id @default(cuid())
+  questionId String
+  value      String
+  normalized String
+  language   String   @default("en")
+  createdAt  DateTime @default(now())
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+}
+
+model Clue {
+  id         String   @id @default(cuid())
+  questionId String
+  text       String
+  sortOrder  Int
+  penalty    Int      @default(2)
+  createdAt  DateTime @default(now())
+
+  question Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  reveals  ClueReveal[]
+
+  @@unique([questionId, sortOrder])
+}
+
+model Event {
+  id              String   @id @default(cuid())
+  quizSetId       String
+  title           String
+  joinCode        String   @unique
+  status          String   @default("draft")
+  maxParticipants Int      @default(50)
+  showAnswers     Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  quizSet      QuizSet       @relation(fields: [quizSetId], references: [id])
+  participants Participant[]
+  attempts     Attempt[]
+
+  @@index([status])
+}
+
+model Participant {
+  id        String   @id @default(cuid())
+  eventId   String
+  name      String
+  createdAt DateTime @default(now())
+
+  event    Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  attempts Attempt[]
+
+  @@index([eventId])
+}
+
+model Attempt {
+  id            String    @id @default(cuid())
+  eventId       String
+  participantId String
+  status        String    @default("in_progress")
+  currentIndex  Int       @default(0)
+  score         Int       @default(0)
+  startedAt     DateTime  @default(now())
+  completedAt   DateTime?
+
+  event       Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  participant Participant  @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  responses   Response[]
+  clueReveals ClueReveal[]
+
+  @@index([eventId, status])
+  @@index([participantId])
+}
+
+model Response {
+  id            String    @id @default(cuid())
+  attemptId     String
+  questionId    String
+  questionIndex Int
+  answerText    String?
+  answerLanguage String?
+  skipped       Boolean   @default(false)
+  autoCorrect   Boolean   @default(false)
+  manualCorrect Boolean?
+  cluesUsed     Int       @default(0)
+  pointsAwarded Int       @default(0)
+  submittedAt   DateTime  @default(now())
+  reviewedAt    DateTime?
+  reviewedById  String?
+
+  attempt  Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id])
+
+  @@unique([attemptId, questionIndex])
+  @@index([questionId])
+}
+
+model ClueReveal {
+  id         String   @id @default(cuid())
+  attemptId  String
+  questionId String
+  clueId     String
+  revealedAt DateTime @default(now())
+
+  attempt  Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id])
+  clue     Clue     @relation(fields: [clueId], references: [id])
+
+  @@unique([attemptId, clueId])
+  @@index([attemptId, questionId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  adminId   String?
+  action    String
+  entity    String
+  entityId  String
+  detail    String?
+  createdAt DateTime @default(now())
+
+  admin AdminUser? @relation(fields: [adminId], references: [id])
+
+  @@index([entity, entityId])
+}

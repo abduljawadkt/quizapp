@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Treasure Hunt Quiz Competition</title>
+<style>
+  @property --pct {
+    syntax: '<number>';
+    inherits: true;
+    initial-value: 0;
+  }
+  :root {
+    --bg-a: #150f2e;
+    --bg-b: #0a0817;
+    --card: rgba(32, 24, 58, 0.92);
+    --card-solid: #1d1638;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(242,183,5,0.35);
+    --primary: #f2b705;
+    --primary-glow: #ffd75e;
+    --primary-dark: #caa000;
+    --text: #f3efe6;
+    --text-secondary: #c7c0e6;
+    --text-muted: #8d84ad;
+    --danger-bg: rgba(255,90,90,0.12);
+    --danger-border: rgba(255,110,110,0.45);
+    --danger-text: #ff9a8f;
+    --success-bg: rgba(90,255,150,0.10);
+    --success-border: rgba(120,255,170,0.4);
+    --success-text: #8dfcb2;
+    --gold-bg: rgba(242,183,5,0.14);
+    --locked-bg: rgba(255,255,255,0.04);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(ellipse at top, var(--bg-a) 0%, var(--bg-b) 65%);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 32px 16px;
+    position: relative;
+    overflow-x: hidden;
+  }
+  #stars-bg { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .star {
+    position: absolute; background: var(--primary-glow); border-radius: 50%;
+    opacity: 0.5; animation: twinkle 3s ease-in-out infinite;
+  }
+  @keyframes twinkle { 0%,100% { opacity: 0.15; transform: scale(0.8);} 50% { opacity: 0.9; transform: scale(1.3);} }
+  @keyframes float { 0%,100% { transform: translateY(0);} 50% { transform: translateY(-6px);} }
+  @keyframes cardIn { from { opacity: 0; transform: translateY(14px) scale(0.99);} to { opacity: 1; transform: translateY(0) scale(1);} }
+  @keyframes pulseGlow { 0%,100% { box-shadow: 0 0 6px var(--primary), 0 0 0 rgba(242,183,5,0); } 50% { box-shadow: 0 0 20px var(--primary-glow), 0 0 8px rgba(242,183,5,0.5); } }
+  @keyframes bounceCoin { 0% { transform: scale(0) rotate(-30deg); opacity:0; } 55% { transform: scale(1.35) rotate(10deg); opacity:1; } 100% { transform: scale(1) rotate(0); } }
+  @keyframes shakeX { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-10px); } 40% { transform: translateX(9px); } 60% { transform: translateX(-7px); } 80% { transform: translateX(5px); } }
+  @keyframes fadeSlide { from { opacity:0; transform: translateX(18px);} to { opacity:1; transform: translateX(0);} }
+  @keyframes popIn { from { opacity:0; transform: scale(0.85);} to { opacity:1; transform: scale(1);} }
+  @keyframes confettiFall { from { transform: translateY(-10px) rotate(0deg); opacity:1; } to { transform: translateY(150px) rotate(360deg); opacity:0; } }
+  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: 200px 0; } }
+  @keyframes ringGrow { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .app { width: 100%; max-width: 640px; position: relative; z-index: 1; }
+  .header { text-align: center; margin-bottom: 20px; position: relative; }
+  .header h1 { font-size: 26px; font-weight: 800; margin: 0 0 4px; color: var(--primary-glow); text-shadow: 0 0 18px rgba(242,183.35); }
+  .header h1 .emoji-float { display: inline-block; animation: float 2.6s ease-in-out infinite; }
+  .header p { font-size: 13px; color: var(--text-secondary); margin: 0; }
+  .top-controls { position: absolute; top: 0; right: 0; display: flex; gap: 6px; }
+  .icon-fab {
+    font-size: 13px; padding: 8px 12px; border-radius: 99px; background: var(--card-solid);
+    border: 1px solid var(--border-strong); color: var(--text); box-shadow: 0 0 10px rgba(242,183,5,0.08);
+  }
+  .icon-fab:hover { box-shadow: 0 0 16px rgba(242,183,5,0.3); }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border-strong);
+    border-radius: 18px;
+    padding: 22px;
+    box-shadow: 0 0 40px rgba(242,183,5,0.06), 0 12px 34px rgba(0,0,0,0.55);
+    backdrop-filter: blur(6px);
+    animation: cardIn 0.4s ease;
+  }
+  input[type="text"], input[type="password"], input[type="number"] {
+    width: 100%; height: 46px; padding: 0 14px; border-radius: 10px;
+    border: 1px solid var(--border-strong); font-size: 16px;
+    background: rgba(255,255,255,0.04); color: var(--text);
+  }
+  input::placeholder { color: var(--text-muted); }
+  input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(242,183,5,0.18); }
+  button {
+    cursor: pointer; border-radius: 10px; border: 1px solid var(--border-strong);
+    background: rgba(255,255,255,0.05); color: var(--text); font-size: 15px; padding: 12px 16px;
+    font-family: inherit; transition: background 0.15s, transform 0.05s, box-shadow 0.2s;
+  }
+  button:hover { background: rgba(242,183,5,0.12); box-shadow: 0 0 12px rgba(242,183,5,0.18); }
+  button:active { transform: scale(0.97); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--primary), #b98a00); border-color: var(--primary);
+    color: #241a00; width: 100%; font-weight: 700;
+  }
+  .btn-primary:hover { box-shadow: 0 0 20px rgba(242,183,5,0.5); }
+  .btn-block { width: 100%; }
+  .label { font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; display: block; font-weight: 600; }
+  .error { font-size: 13px; color: var(--danger-text); min-height: 18px; margin-top: 6px; }
+  .hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  hr.sep { border: none; border-top: 1px dashed var(--border-strong); margin: 18px 0; }
+
+  /* ---- Setup screen ---- */
+  .name-slot { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; animation: fadeSlide 0.3s ease; }
+  .name-slot input { flex: 1; }
+  .name-slot .num-badge {
+    width: 30px; height: 30px; border-radius: 50%; background: var(--gold-bg);
+    color: var(--primary-glow); font-weight: 800; font-size: 13px; border: 1px solid var(--border-strong);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+
+  /* ---- Lobby / treasure map ---- */
+  .lobby-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 6px; }
+  .island-card {
+    border: 1px solid var(--border-strong); border-radius: 14px; padding: 12px 8px;
+    text-align: center; background: linear-gradient(180deg, rgba(242,183,5,0.08), rgba(255,255,255,0.02));
+    transition: transform 0.15s;
+  }
+  .island-card:hover { transform: translateY(-3px); }
+  .island-card .icon { font-size: 26px; margin-bottom: 4px; animation: float 3s ease-in-out infinite; }
+  .island-card .p-name { font-size: 13px; font-weight: 700; margin: 0 0 2px; word-break: break-word; }
+  .island-card .p-status { font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; }
+  .island-card button { width: 100%; font-size: 12px; padding: 8px 4px; }
+  .island-card.done { background: linear-gradient(180deg, rgba(120,255,170,0.14), rgba(255,255,255,0.02)); }
+  .island-card.active-slot { background: linear-gradient(180deg, rgba(242,183,5,0.22), rgba(255,255,255,0.02)); border-color: var(--primary); }
+
+  /* ---- Quiz map path ---- */
+  .quest-path { display: flex; justify-content: space-between; gap: 4px; margin-bottom: 18px; }
+  .chest-node {
+    flex: 1; text-align: center; font-size: 17px; padding: 6px 0; border-radius: 8px;
+    background: var(--locked-bg); color: var(--text-muted); position: relative; transition: transform 0.2s;
+  }
+  .chest-node.current { background: var(--gold-bg); color: var(--primary-glow); transform: scale(1.14); font-weight: 800; animation: pulseGlow 1.4s ease-in-out infinite; }
+  .chest-node.correct { background: var(--success-bg); color: var(--success-text); animation: popIn 0.3s ease; }
+  .chest-node.wrong { background: var(--danger-bg); color: var(--danger-text); animation: popIn 0.3s ease; }
+  .chest-node.skipped { background: rgba(255,255,255,0.06); color: var(--text-muted); animation: popIn 0.3s ease; }
+
+  .question { font-size: 17px; font-weight: 700; margin: 0 0 16px; line-height: 1.4; animation: fadeSlide 0.35s ease; }
+  .actions { display: flex; gap: 10px; margin-top: 16px; }
+  .actions button { flex: 1; }
+
+  /* ---- Clues ---- */
+  .clue-section { margin-top: 16px; border: 1px dashed var(--border-strong); border-radius: 12px; padding: 12px; background: rgba(255,255,255,0.02); }
+  .clue-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; flex-wrap: wrap; gap: 4px; }
+  .clue-head .clue-title { font-size: 13px; font-weight: 700; color: var(--text-secondary); }
+  .clue-head .clue-points { font-size: 12px; color: var(--primary-glow); font-weight: 700; }
+  .clue-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .clue-btn {
+    font-size: 12px; padding: 9px 4px; text-align: center; border-radius: 8px;
+    background: rgba(255,255,255,0.04); border: 1px solid var(--border-strong); color: var(--text-secondary);
+  }
+  .clue-btn.revealed { background: var(--gold-bg); color: var(--primary-glow); border-color: var(--primary); }
+  .clue-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+  .clue-btn:not(:disabled):hover { background: rgba(242,183,5,0.18); }
+  .clue-texts { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .clue-text-item { font-size: 13px; background: rgba(0,0,0,0.18); border-left: 3px solid var(--primary); border-radius: 6px; padding: 8px 10px; animation: fadeSlide 0.3s ease; }
+  .clue-text-item b { color: var(--primary-glow); }
+
+  /* ---- Keyboard ---- */
+  .kb-wrap { margin-top: 14px; border: 1px solid var(--border-strong); border-radius: 12px; overflow: hidden; }
+  .kb-tabs { display: flex; background: rgba(255,255,255,0.04); }
+  .kb-tab { flex: 1; border: none; border-radius: 0; background: transparent; font-size: 13px; font-weight: 700; padding: 10px 8px; color: var(--text-secondary); }
+  .kb-tab.active { background: rgba(242,183,5,0.14); color: var(--primary-glow); border-bottom: 2px solid var(--primary); }
+  .kb-body { padding: 10px; background: rgba(0,0,0,0.15); }
+  .kb-row { display: flex; gap: 5px; margin-bottom: 5px; justify-content: center; flex-wrap: wrap; }
+  .kb-key {
+    flex: 1; min-width: 26px; max-width: 44px; height: 38px; padding: 0; border-radius: 7px;
+    border: 1px solid var(--border-strong); background: rgba(255,255,255,0.05); color: var(--text);
+    font-size: 15px; display: flex; align-items: center; justify-content: center;
+  }
+  .kb-key:hover { background: rgba(242,183,5,0.18); }
+  .kb-bottom-row { display: flex; gap: 6px; margin-top: 4px; }
+  .kb-bottom-row .kb-key { flex: none; height: 40px; font-size: 13px; padding: 0 12px; max-width: none; }
+  .kb-bottom-row .kb-space { flex: 1; }
+  .kb-bottom-row .kb-back, .kb-bottom-row .kb-clear { min-width: 70px; }
+
+  /* ---- Feedback / result ---- */
+  .feedback-hero { text-align: center; padding: 20px 10px; }
+  .feedback-emoji { font-size: 56px; margin-bottom: 10px; display: inline-block; }
+  .feedback-emoji.fx-correct { animation: bounceCoin 0.6s ease; }
+  .feedback-emoji.fx-wrong { animation: shakeX 0.5s ease; }
+  .feedback-emoji.fx-skip { animation: fadeSlide 0.5s ease; }
+  .feedback-text { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .feedback-points { font-size: 14px; font-weight: 700; color: var(--primary-glow); margin-bottom: 4px; }
+  .feedback-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 18px; }
+
+  .score-hero {
+    text-align: center; background: linear-gradient(180deg, rgba(242,183,5,0.14), rgba(255,255,255,0.02) 75%);
+    border-radius: 14px; padding: 26px 18px 18px; margin: -4px -4px 18px; position: relative; overflow: hidden;
+  }
+  .trophy { font-size: 46px; line-height: 1; margin-bottom: 6px; animation: popIn 0.5s ease; }
+  .score-ring {
+    width: 128px; height: 128px; border-radius: 50%; margin: 0 auto 12px;
+    display: flex; align-items: center; justify-content: center;
+    background: conic-gradient(var(--primary-glow) calc(var(--pct) * 1%), rgba(255,255,255,0.07) 0);
+    transition: --pct 1s ease;
+    animation: ringGrow 0.5s ease;
+    box-shadow: 0 0 24px rgba(242,183,5,0.25);
+  }
+  .score-ring-inner { width: 104px; height: 104px; border-radius: 50%; background: var(--card-solid); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .score-ring-inner .num { font-size: 22px; font-weight: 800; color: var(--primary-glow); line-height: 1; }
+  .badge-pill { display: inline-block; font-size: 13px; font-weight: 700; background: rgba(255,255,255,0.05); border: 1px solid var(--border-strong); border-radius: 99px; padding: 5px 14px; margin-bottom: 8px; animation: popIn 0.4s ease; }
+  .result-name { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+  .result-pct { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+  .compliment { font-size: 15px; color: var(--success-text); background: var(--success-bg); border: 1px solid var(--success-border); border-radius: 10px; padding: 10px 14px; display: inline-block; margin-top: 4px; animation: fadeSlide 0.4s ease; }
+  .btn-row { display: flex; gap: 10px; margin-top: 10px; }
+  .btn-row button { flex: 1; }
+  .confetti-piece { position: absolute; top: 10%; font-size: 18px; animation: confettiFall linear forwards; pointer-events: none; }
+
+  /* ---- Answer sheet ---- */
+  .answer-sheet { margin-top: 18px; border-top: 1px dashed var(--border-strong); padding-top: 16px; animation: fadeSlide 0.3s ease; }
+  .answer-sheet h2 { font-size: 15px; font-weight: 800; margin: 0 0 12px; color: var(--text-secondary); }
+  .answer-item { padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .answer-item:last-child { border-bottom: none; }
+  .answer-q { font-size: 14px; font-weight: 700; margin: 0 0 6px; display: flex; justify-content: space-between; gap: 8px; }
+  .answer-q .pts { font-size: 12px; color: var(--primary-glow); font-weight: 800; white-space: nowrap; }
+  .answer-row { font-size: 13px; display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; }
+  .answer-row .tag { font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; font-weight: 700; min-width: 100px; }
+  .answer-row.your .tag, .answer-row.your span.val { color: var(--danger-text); }
+  .answer-row.your.correct-pick .tag, .answer-row.your.correct-pick span.val { color: var(--success-text); }
+  .answer-row.your.skipped .tag, .answer-row.your.skipped span.val { color: var(--text-muted); }
+  .answer-row.correct .tag, .answer-row.correct span.val { color: var(--success-text); font-weight: 700; }
+  .answer-row.clues .tag, .answer-row.clues span.val { color: var(--text-muted); }
+  .override-tag { font-size: 10px; background: var(--gold-bg); color: var(--primary-glow); border-radius: 6px; padding: 1px 6px; margin-left: 4px; }
+
+  /* ---- Admin ---- */
+  .admin-participant { border: 1px solid var(--border-strong); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+  .admin-participant-head { display: flex; justify-content: space-between; align-items: center; }
+  .admin-participant-head .p-name { font-weight: 800; font-size: 14px; }
+  .admin-participant-head .p-score { font-size: 13px; color: var(--text-secondary); }
+  .admin-q-row { border-top: 1px solid var(--border); padding: 10px 0; }
+  .admin-q-row .q-text { font-size: 13px; font-weight: 700; margin: 0 0 4px; }
+  .admin-q-row .a-text { font-size: 13px; margin: 0 0 6px; }
+  .verdict-btns { display: flex; gap: 6px; }
+  .verdict-btns button { flex: 1; font-size: 12px; padding: 6px 4px; }
+  .verdict-btns button.on-correct { background: var(--success-bg); border-color: var(--success-border); color: var(--success-text); }
+  .verdict-btns button.on-wrong { background: var(--danger-bg); border-color: var(--danger-border); color: var(--danger-text); }
+  .auto-tag { font-size: 11px; color: var(--text-muted); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 7px 5px; border-bottom: 1px solid var(--border); }
+  th { color: var(--text-muted); font-weight: 700; font-size: 11px; text-transform: uppercase; }
+  td.rank { color: var(--primary-glow); font-weight: 800; }
+  .empty-note { font-size: 13px; color: var(--text-muted); text-align: center; padding: 12px 0; }
+  .footer-note { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 18px; position: relative; z-index: 1; }
+  .danger-zone { border: 1px dashed var(--danger-border); border-radius: 10px; padding: 12px; margin-top: 18px; }
+  .danger-zone button { background: var(--danger-bg); border-color: var(--danger-border); color: var(--danger-text); }
+</style>
+</head>
+<body>
+<div id="stars-bg"></div>
+<div class="app">
+  <div class="header">
+    <h1><span class="emoji-float">🏆</span> Treasure Hunt Quiz</h1>
+    <p>Islamic knowledge expedition &middot; 10 chests to unlock &middot; up to 9 explorers</p>
+    <div class="top-controls">
+      <button class="icon-fab" id="sound-toggle-btn">🔊</button>
+      <button class="icon-fab" id="admin-fab-btn">⚙️ Admin</button>
+    </div>
+  </div>
+  <div class="card" id="card"></div>
+  <div class="footer-note">Each chest is worth 10 points. Every clue you open costs 2 points. Works fully offline &middot; data saved on this device only.</div>
+</div>
+
+<script>
+/* ================= Decorative starfield ================= */
+(function initStars() {
+  const wrap = document.getElementById('stars-bg');
+  const n = 45;
+  for (let i = 0; i < n; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2.5 + 1;
+    s.style.width = size + 'px';
+    s.style.height = size + 'px';
+    s.style.left = Math.random() * 100 + 'vw';
+    s.style.top = Math.random() * 100 + 'vh';
+    s.style.animationDelay = (Math.random() * 3) + 's';
+    s.style.animationDuration = (2 + Math.random() * 3) + 's';
+    wrap.appendChild(s);
+  }
+})();
+
+/* ================= Sound engine (synthesized, no files needed) ================= */
+let audioCtx = null;
+let soundEnabled = localStorage.getItem('treasure_quiz_sound') !== 'off';
+function ensureAudioCtx() {
+  if (!audioCtx) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    audioCtx = new Ctx();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playTone(freq, start, duration, type, peak) {
+  if (!soundEnabled) return;
+  try {
+    const ctx = ensureAudioCtx();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.value = freq;
+    const t0 = ctx.currentTime + start;
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.linearRampToValueAtTime(peak || 0.08, t0 + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + duration + 0.03);
+  } catch (e) {}
+}
+const sfx = {
+  click() { playTone(620, 0, 0.05, 'square', 0.045); },
+  keypress() { playTone(900, 0, 0.025, 'square', 0.025); },
+  navigate() { playTone(440, 0, 0.07, 'sine', 0.05); playTone(660, 0.05, 0.09, 'sine', 0.045); },
+  open() { playTone(300, 0, 0.05, 'triangle', 0.07); playTone(520, 0.05, 0.09, 'triangle', 0.06); },
+  correct() { playTone(523.25, 0, 0.12, 'triangle', 0.09); playTone(659.25, 0.1, 0.12, 'triangle', 0.085); playTone(783.99, 0.2, 0.2, 'triangle', 0.08); },
+  wrong() { playTone(196, 0, 0.25, 'sawtooth', 0.06); playTone(146, 0.09, 0.3, 'sawtooth', 0.055); },
+  skip() { playTone(350, 0, 0.07, 'sine', 0.045); playTone(280, 0.06, 0.09, 'sine', 0.04); },
+  clue() { playTone(700, 0, 0.05, 'sine', 0.05); playTone(880, 0.05, 0.08, 'sine', 0.04); },
+  start() { [261.63, 329.63, 392.0, 523.25].forEach((f, i) => playTone(f, i * 0.12, 0.18, 'triangle', 0.075)); },
+  finish() { [392.0, 523.25, 659.25, 783.99, 987.77].forEach((f, i) => playTone(f, i * 0.11, 0.28, 'triangle', 0.08)); }
+};
+function updateSoundBtn() {
+  const btn = document.getElementById('sound-toggle-btn');
+  if (btn) btn.textContent = soundEnabled ? "🔊" : "🔇";
+}
+document.getElementById('sound-toggle-btn').addEventListener('click', () => {
+  soundEnabled = !soundEnabled;
+  localStorage.setItem('treasure_quiz_sound', soundEnabled ? 'on' : 'off');
+  updateSoundBtn();
+  if (soundEnabled) sfx.click();
+});
+updateSoundBtn();
+
+/* ================= Question bank ================= */
+/* Each question is worth 10 points. Every clue opened before answering costs 2 points. */
+const QUESTIONS = [
+  { q: "How many pillars of Islam are there?",
+    accept: ["5","five","خمسة","خمس"],
+    correctDisplay: { en: "5 (Five)", ar: "خمسة" },
+    clues: [
+      "It's a number between 1 and 10.",
+      "Prayer (Salah) is one of them.",
+      "Fasting during Ramadan is also one of them.",
+      "The number is the same as the number of daily prayers."
+    ] },
+  { q: "What is the holy book of Islam called?",
+    accept: ["quran","koran","al quran","alquran","the quran","holy quran","القرآن","قرآن","khuran"],
+    correctDisplay: { en: "Quran", ar: "القرآن" },
+    clues: [
+      "It was revealed to Prophet Muhammad ﷺ.",
+      "It is written in Arabic.",
+      "It is recited during the five daily prayers.",
+      "Its name literally means \"The Recitation\"."
+    ] },
+  { q: "In which month do Muslims observe fasting (Sawm)?",
+    accept: ["ramadan","ramadhan","ramzan","ramadaan","رمضان"],
+    correctDisplay: { en: "Ramadan", ar: "رمضان" },
+    clues: [
+      "It's the ninth month of the Islamic lunar calendar.",
+      "Muslims fast from dawn to sunset the whole month.",
+      "It ends with the celebration of Eid al-Fitr.",
+      "The Quran was first revealed during this month."
+    ] },
+  { q: "What is the Islamic pilgrimage to Mecca called?",
+    accept: ["hajj","haj","الحج","حج"],
+    correctDisplay: { en: "Hajj", ar: "الحج" },
+    clues: [
+      "It's one of the Five Pillars of Islam.",
+      "It takes place in the Islamic month of Dhul Hijjah.",
+      "Every able Muslim must perform it once in their lifetime if possible.",
+      "Pilgrims wear simple white garments called Ihram."
+    ] },
+  { q: "How many times a day do Muslims pray (Salah)?",
+    accept: ["5","five","خمس","خمسة"],
+    correctDisplay: { en: "5 (Five)", ar: "خمس" },
+    clues: [
+      "It's the same number as the pillars of Islam.",
+      "One of the prayers is performed at dawn (Fajr).",
+      "Another is performed after sunset (Maghrib).",
+      "The total count is between 4 and 6."
+    ] },
+  { q: "Who is considered the final prophet in Islam?",
+    accept: ["muhammad","mohammed","mohammad","muhammed","mohamed","محمد"],
+    correctDisplay: { en: "Muhammad ﷺ", ar: "محمد" },
+    clues: [
+      "He was born in Mecca.",
+      "He received revelation through Angel Jibreel.",
+      "His migration to Medina is called the Hijrah.",
+      "His name means \"the praised one\"."
+    ] },
+  { q: "What is the declaration of faith in Islam called?",
+    accept: ["shahada","shahadah","kalima","الشهادة","شهادة"],
+    correctDisplay: { en: "Shahada", ar: "الشهادة" },
+    clues: [
+      "It's one of the Five Pillars of Islam.",
+      "Saying it sincerely is how a person enters Islam.",
+      "It affirms there is no god but Allah.",
+      "It also affirms Muhammad ﷺ as His messenger."
+    ] },
+  { q: "Towards which city do Muslims face when praying?",
+    accept: ["mecca","makkah","makka","مكة"],
+    correctDisplay: { en: "Mecca (Makkah)", ar: "مكة" },
+    clues: [
+      "It's a city in Saudi Arabia.",
+      "The Kaaba is located there.",
+      "This direction is called the Qibla.",
+      "It's also the birthplace of Prophet Muhammad ﷺ."
+    ] },
+  { q: "What does 'Zakat' refer to?",
+    accept: ["charity","alms","almsgiving","alms giving","obligatory charity","الزكاة","زكاة"],
+    correctDisplay: { en: "Charity (obligatory almsgiving)", ar: "الزكاة" },
+    clues: [
+      "It's one of the Five Pillars of Islam.",
+      "It involves giving a portion of one's wealth.",
+      "It's meant to purify wealth and help the needy.",
+      "It's usually calculated as 2.5% of savings."
+    ] },
+  { q: "In which city was Prophet Muhammad born?",
+    accept: ["mecca","makkah","makka","مكة"],
+    correctDisplay: { en: "Mecca (Makkah)", ar: "مكة" },
+    clues: [
+      "It's the same city Muslims face during prayer.",
+      "It's home to the Kaaba.",
+      "It's located in modern-day Saudi Arabia.",
+      "Pilgrims travel here for Hajj and Umrah."
+    ] }
+];
+
+const POINTS_PER_QUESTION = 10;
+const CLUE_PENALTY = 2;
+const MAX_SCORE = QUESTIONS.length * POINTS_PER_QUESTION;
+
+const MAX_PARTICIPANTS = 9;
+const MIN_PARTICIPANTS = 2;
+const SESSION_KEY = "treasure_quiz_session_v3";
+const HISTORY_KEY = "treasure_quiz_history_v3";
+
+const card = document.getElementById('card');
+
+/* ================= State ================= */
+let view = "setup";
+let activeParticipantId = null;
+let viewingParticipantId = null;
+let lastFeedback = null;
+let activeLang = "en";
+let adminUnlocked = false;
+
+/* Tracks clue reveals for the question currently being played (not yet committed to an answer record) */
+let currentClueState = { qIndex: -1, used: 0, revealed: [false, false, false, false] };
+
+/* ================= Persistence ================= */
+function loadSession() {
+  try { const raw = localStorage.getItem(SESSION_KEY); return raw ? JSON.parse(raw) : null; }
+  catch (e) { return null; }
+}
+function saveSession(s) { try { localStorage.setItem(SESSION_KEY, JSON.stringify(s)); } catch (e) {} }
+function clearSession() { try { localStorage.removeItem(SESSION_KEY); } catch (e) {} }
+function getHistory() {
+  try { const raw = localStorage.getItem(HISTORY_KEY); return raw ? JSON.parse(raw) : []; }
+  catch (e) { return []; }
+}
+function addHistoryEntry(entry) {
+  try { const h = getHistory(); h.push(entry); localStorage.setItem(HISTORY_KEY, JSON.stringify(h)); } catch (e) {}
+}
+
+let session = loadSession();
+if (session && session.participants && session.participants.length) view = "lobby";
+
+/* ================= Helpers ================= */
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str == null ? "" : String(str);
+  return div.innerHTML;
+}
+function uid() { return "p" + Math.random().toString(36).slice(2, 9); }
+
+/* ---- Answer matching ---- */
+function normalize(str) {
+  const arabicDigits = "٠١٢٣٤٥٦٧٨٩";
+  let s = String(str).replace(/[٠-٩]/g, d => String(arabicDigits.indexOf(d)));
+  return s.toLowerCase().normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\u064B-\u0652\u0670\u0640]/g, "")
+    .replace(/[^\p{L}\p{N}]+/gu, "")
+    .trim();
+}
+function isLatinWord(str) { return /^[a-z0-9]+$/.test(str); }
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) {
+    const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+    dp[i][j] = Math.min(dp[i-1][j] + 1, dp[i][j-1] + 1, dp[i-1][j-1] + cost);
+  }
+  return dp[m][n];
+}
+function isMatch(userInput, acceptList) {
+  const ni = normalize(userInput);
+  if (!ni) return false;
+  for (const raw of acceptList) {
+    const na = normalize(raw);
+    if (na === ni) return true;
+    if (isLatinWord(na) && isLatinWord(ni)) {
+      const threshold = na.length <= 4 ? 0 : na.length <= 7 ? 1 : 2;
+      if (levenshtein(na, ni) <= threshold) return true;
+    }
+  }
+  return false;
+}
+
+/* ---- Scoring ---- */
+function effectiveCorrect(rec) {
+  if (!rec || rec.skipped) return false;
+  if (rec.manual === true) return true;
+  if (rec.manual === false) return false;
+  return !!rec.auto;
+}
+function cluesUsedFor(rec) { return rec && rec.cluesUsed ? rec.cluesUsed : 0; }
+function pointsForRecord(rec) {
+  if (!effectiveCorrect(rec)) return 0;
+  const used = cluesUsedFor(rec);
+  return Math.max(0, POINTS_PER_QUESTION - used * CLUE_PENALTY);
+}
+function maxPossibleForRecord(rec) {
+  const used = cluesUsedFor(rec);
+  return Math.max(0, POINTS_PER_QUESTION - used * CLUE_PENALTY);
+}
+function computeScore(p) { return p.answers.reduce((sum, rec) => sum + pointsForRecord(rec), 0); }
+function computeCorrectCount(p) { return p.answers.filter(effectiveCorrect).length; }
+function computeSkips(p) { return p.answers.filter(a => a.skipped).length; }
+
+/* ================= Keyboard (English + Arabic, with numbers) ================= */
+const KB_LAYOUTS = {
+  en: {
+    label: "English", dir: "ltr",
+    rows: [
+      ["1","2","3","4","5","6","7","8","9","0"],
+      ["q","w","e","r","t","y","u","i","o","p"],
+      ["a","s","d","f","g","h","j","k","l"],
+      ["z","x","c","v","b","n","m"],
+      ["'","-",".",","]
+    ]
+  },
+  ar: {
+    label: "\u0639\u0631\u0628\u064a (Arabic)", dir: "rtl",
+    rows: [
+      ["\u0661","\u0662","\u0663","\u0664","\u0665","\u0666","\u0667","\u0668","\u0669","\u0660"],
+      ["\u0636","\u0635","\u062b","\u0642","\u0641","\u063a","\u0639","\u0647","\u062e","\u062d","\u062c","\u062f"],
+      ["\u0634","\u0633","\u064a","\u0628","\u0644","\u0627","\u062a","\u0646","\u0645","\u0643","\u0637"],
+      ["\u0626","\u0621","\u0624","\u0631","\u0644\u0627","\u0649","\u0629","\u0648","\u0632","\u0638","\u0630"],
+      ["\u060c","\u061f","\u0640"],
+      [
+        { char: "\u064E", label: "\u0640\u064E" },
+        { char: "\u064F", label: "\u0640\u064F" },
+        { char: "\u0650", label: "\u0640\u0650" },
+        { char: "\u0651", label: "\u0640\u0651" },
+        { char: "\u0652", label: "\u0640\u0652" },
+        { char: "\u064B", label: "\u0640\u064B" },
+        { char: "\u064C", label: "\u0640\u064C" },
+        { char: "\u064D", label: "\u0640\u064D" },
+        { char: "\u0670", label: "\u0640\u0670" }
+      ]
+    ]
+  }
+};
+function insertAtCursor(input, text) {
+  const start = input.selectionStart ?? input.value.length;
+  const end = input.selectionEnd ?? input.value.length;
+  input.value = input.value.slice(0, start) + text + input.value.slice(end);
+  const pos = start + text.length;
+  input.focus();
+  input.setSelectionRange(pos, pos);
+}
+function backspaceAtCursor(input) {
+  const start = input.selectionStart ?? input.value.length;
+  const end = input.selectionEnd ?? input.value.length;
+  if (start === end) {
+    if (start === 0) return;
+    input.value = input.value.slice(0, start - 1) + input.value.slice(end);
+    input.focus(); input.setSelectionRange(start - 1, start - 1);
+  } else {
+    input.value = input.value.slice(0, start) + input.value.slice(end);
+    input.focus(); input.setSelectionRange(start, start);
+  }
+}
+function renderKeyboard(container, input) {
+  const langs = Object.keys(KB_LAYOUTS);
+  container.innerHTML = `
+    <div class="kb-wrap">
+      <div class="kb-tabs">
+        ${langs.map(l => `<button type="button" class="kb-tab ${l === activeLang ? 'active' : ''}" data-lang="${l}">${KB_LAYOUTS[l].label}</button>`).join("")}
+      </div>
+      <div class="kb-body" id="kb-body"></div>
+    </div>
+  `;
+  container.querySelectorAll('.kb-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      sfx.click();
+      activeLang = btn.dataset.lang;
+      input.dir = KB_LAYOUTS[activeLang].dir;
+      renderKeyboard(container, input);
+    });
+  });
+  const body = document.getElementById('kb-body');
+  const layout = KB_LAYOUTS[activeLang];
+  body.innerHTML = layout.rows.map(row =>
+    `<div class="kb-row">${row.map(k => {
+      const isObj = typeof k === "object";
+      const char = isObj ? k.char : k;
+      const label = isObj ? k.label : k;
+      return `<button type="button" class="kb-key" data-char="${escapeHtml(char)}">${escapeHtml(label)}</button>`;
+    }).join("")}</div>`
+  ).join("") + `
+    <div class="kb-bottom-row">
+      <button type="button" class="kb-key kb-back" id="kb-back">&#9003; Back</button>
+      <button type="button" class="kb-key kb-space" id="kb-space">Space</button>
+      <button type="button" class="kb-key kb-clear" id="kb-clear">Clear</button>
+    </div>
+  `;
+  body.querySelectorAll('.kb-key[data-char]').forEach(btn => {
+    btn.addEventListener('click', () => { sfx.keypress(); insertAtCursor(input, btn.dataset.char); });
+  });
+  document.getElementById('kb-back').addEventListener('click', () => { sfx.keypress(); backspaceAtCursor(input); });
+  document.getElementById('kb-space').addEventListener('click', () => { sfx.keypress(); insertAtCursor(input, " "); });
+  document.getElementById('kb-clear').addEventListener('click', () => { sfx.click(); input.value = ""; input.focus(); });
+}
+
+/* ================= Confetti ================= */
+function spawnConfetti(container, count) {
+  const emojis = ["🎉","✨","💰","🪙","⭐"];
+  for (let i = 0; i < count; i++) {
+    const span = document.createElement('span');
+    span.className = 'confetti-piece';
+    span.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    span.style.left = Math.random() * 90 + '%';
+    span.style.animationDuration = (1 + Math.random() * 1.2) + 's';
+    span.style.animationDelay = (Math.random() * 0.4) + 's';
+    container.appendChild(span);
+    setTimeout(() => span.remove(), 2200);
+  }
+}
+
+/* ================= SETUP screen ================= */
+function renderSetup() {
+  const count = renderSetup._count || MAX_PARTICIPANTS;
+  const names = renderSetup._names || Array(MAX_PARTICIPANTS).fill("");
+  card.innerHTML = `
+    <span class="label">Number of explorers (2–9)</span>
+    <input type="number" id="count-input" min="${MIN_PARTICIPANTS}" max="${MAX_PARTICIPANTS}" value="${count}" />
+    <div id="name-slots" style="margin-top:14px;"></div>
+    <span class="label" style="margin-top:6px;">Admin PIN (optional — protects the admin panel)</span>
+    <input type="text" id="pin-input" placeholder="Leave blank for no PIN" inputmode="numeric" />
+    <div class="error" id="setup-err"></div>
+    <button class="btn-primary" id="start-comp-btn" style="margin-top:14px;">🏁 Start the treasure hunt</button>
+  `;
+  const slotsWrap = document.getElementById('name-slots');
+  function drawSlots(n) {
+    slotsWrap.innerHTML = "";
+    for (let i = 0; i < n; i++) {
+      const row = document.createElement('div');
+      row.className = "name-slot";
+      row.innerHTML = `<span class="num-badge">${i+1}</span><input type="text" class="p-name-input" placeholder="Explorer ${i+1} name" value="${escapeHtml(names[i] || "")}" />`;
+      slotsWrap.appendChild(row);
+    }
+  }
+  drawSlots(count);
+  const countInput = document.getElementById('count-input');
+  countInput.addEventListener('input', () => {
+    let n = parseInt(countInput.value, 10);
+    if (isNaN(n)) return;
+    n = Math.max(MIN_PARTICIPANTS, Math.min(MAX_PARTICIPANTS, n));
+    const current = [...document.querySelectorAll('.p-name-input')].map(i => i.value);
+    renderSetup._names = current;
+    renderSetup._count = n;
+    drawSlots(n);
+  });
+  document.getElementById('start-comp-btn').addEventListener('click', () => {
+    const inputs = [...document.querySelectorAll('.p-name-input')];
+    const vals = inputs.map(i => i.value.trim());
+    const err = document.getElementById('setup-err');
+    if (vals.some(v => !v)) { err.textContent = "Enter a name for every explorer slot"; return; }
+    const pin = document.getElementById('pin-input').value.trim();
+    session = { pin: pin || "", participants: vals.map(name => ({ id: uid(), name, answers: [] })) };
+    saveSession(session);
+    sfx.start();
+    view = "lobby";
+    renderApp();
+  });
+}
+
+/* ================= LOBBY screen ================= */
+function participantStatus(p) {
+  if (p.answers.length >= QUESTIONS.length) return "done";
+  if (p.answers.length > 0) return "active";
+  return "pending";
+}
+function renderLobby() {
+  const islands = session.participants.map((p) => {
+    const status = participantStatus(p);
+    let icon = "🏝️", statusLabel = "Waiting to start", btnLabel = "Start quest", cls = "";
+    if (status === "active") { icon = "🧭"; statusLabel = `In progress (${p.answers.length}/${QUESTIONS.length})`; btnLabel = "Continue quest"; cls = "active-slot"; }
+    if (status === "done") { icon = "💰"; statusLabel = `Treasure found: ${computeScore(p)}/${MAX_SCORE} pts`; btnLabel = "View treasure"; cls = "done"; }
+    return `
+      <div class="island-card ${cls}">
+        <div class="icon">${icon}</div>
+        <p class="p-name">${escapeHtml(p.name)}</p>
+        <p class="p-status">${statusLabel}</p>
+        <button data-pid="${p.id}" data-status="${status}" class="lobby-action-btn">${btnLabel}</button>
+      </div>
+    `;
+  }).join("");
+
+  const doneList = session.participants.filter(p => participantStatus(p) === "done")
+    .slice().sort((a, b) => computeScore(b) - computeScore(a));
+  const medalRows = doneList.map((p, i) => {
+    const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : (i+1);
+    return `<tr><td class="rank">${medal}</td><td>${escapeHtml(p.name)}</td><td>${computeScore(p)} / ${MAX_SCORE} pts</td></tr>`;
+  }).join("");
+
+  card.innerHTML = `
+    <p class="label" style="margin-bottom:10px;">🗺️ The treasure map — tap an island to play</p>
+    <div class="lobby-grid">${islands}</div>
+    <hr class="sep" />
+    <p class="label">🏆 Current expedition standings</p>
+    ${doneList.length ? `<table><thead><tr><th>#</th><th>Explorer</th><th>Treasure</th></tr></thead><tbody>${medalRows}</tbody></table>` : `<p class="empty-note">No one has found their treasure yet.</p>`}
+    <div class="danger-zone">
+      <p class="hint" style="margin-bottom:8px;">Starting a brand-new competition clears all current explorers and scores.</p>
+      <button class="btn-block" id="new-competition-btn">🔄 Start a new competition</button>
+    </div>
+  `;
+  card.querySelectorAll('.lobby-action-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      sfx.navigate();
+      const pid = btn.dataset.pid;
+      const status = btn.dataset.status;
+      if (status === "done") { viewingParticipantId = pid; view = "result"; }
+      else { activeParticipantId = pid; view = "quiz"; }
+      renderApp();
+    });
+  });
+  document.getElementById('new-competition-btn').addEventListener('click', () => {
+    if (confirm("This will erase the current explorers and their scores. Start a new competition?")) {
+      sfx.click();
+      clearSession();
+      session = null;
+      renderSetup._names = null;
+      renderSetup._count = null;
+      view = "setup";
+      renderApp();
+    }
+  });
+}
+
+/* ================= QUIZ screen ================= */
+function renderClueSection(item) {
+  const wrap = document.getElementById('clue-grid');
+  const textsWrap = document.getElementById('clue-texts');
+  const pointsEl = document.getElementById('clue-points');
+  if (!wrap) return;
+  wrap.innerHTML = item.clues.map((c, i) => {
+    const isRevealed = currentClueState.revealed[i];
+    const isNext = i === currentClueState.used && !isRevealed;
+    const locked = !isRevealed && !isNext;
+    return `<button type="button" class="clue-btn ${isRevealed ? 'revealed' : ''}" data-clue-idx="${i}" ${locked ? 'disabled' : ''}>
+      ${isRevealed ? '🔓 Clue ' + (i+1) : locked ? '🔒 Clue ' + (i+1) : '🔎 Clue ' + (i+1)}
+    </button>`;
+  }).join("");
+  textsWrap.innerHTML = item.clues.map((c, i) =>
+    currentClueState.revealed[i] ? `<div class="clue-text-item"><b>Clue ${i+1}:</b> ${escapeHtml(c)}</div>` : ""
+  ).join("");
+  const possible = Math.max(0, POINTS_PER_QUESTION - currentClueState.used * CLUE_PENALTY);
+  pointsEl.textContent = `Answer now for up to ${possible} pts`;
+  wrap.querySelectorAll('.clue-btn:not([disabled])').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.clueIdx, 10);
+      if (currentClueState.revealed[idx]) return;
+      sfx.clue();
+      currentClueState.revealed[idx] = true;
+      currentClueState.used += 1;
+      renderClueSection(item);
+    });
+  });
+}
+function renderQuiz() {
+  const p = session.participants.find(x => x.id === activeParticipantId);
+  const idx = p.answers.length;
+  const item = QUESTIONS[idx];
+
+  if (currentClueState.qIndex !== idx) {
+    currentClueState = { qIndex: idx, used: 0, revealed: [false, false, false, false] };
+  }
+
+  const pathHtml = QUESTIONS.map((_, i) => {
+    let cls = "chest-node", icon = "🔒";
+    if (i < p.answers.length) {
+      const rec = p.answers[i];
+      if (rec.skipped) { cls += " skipped"; icon = "⏭️"; }
+      else if (effectiveCorrect(rec)) { cls += " correct"; icon = "🪙"; }
+      else { cls += " wrong"; icon = "💨"; }
+    } else if (i === idx) { cls += " current"; icon = "🗝️"; }
+    return `<div class="${cls}">${icon}</div>`;
+  }).join("");
+
+  card.innerHTML = `
+    <p class="label" style="margin-bottom:6px;">${escapeHtml(p.name)} &middot; Chest ${idx + 1} of ${QUESTIONS.length} &middot; worth ${POINTS_PER_QUESTION} pts</p>
+    <div class="quest-path">${pathHtml}</div>
+    <p class="question">${item.q}</p>
+    <span class="label">Your answer</span>
+    <input type="text" id="answer-input" placeholder="Type your answer to unlock the chest" autocomplete="off" dir="${KB_LAYOUTS[activeLang].dir}" />
+    <div id="kb-container"></div>
+    <div class="error" id="q-err"></div>
+    <div class="actions">
+      <button id="skip-btn">Skip chest</button>
+      <button class="btn-primary" id="submit-btn">Open chest 🔓</button>
+    </div>
+    <div class="clue-section">
+      <div class="clue-head">
+        <span class="clue-title">🔍 Stuck? Reveal clues one by one</span>
+        <span class="clue-points" id="clue-points"></span>
+      </div>
+      <p class="hint" style="margin-bottom:8px;">Each clue you open costs ${CLUE_PENALTY} points off this chest's ${POINTS_PER_QUESTION}-point value.</p>
+      <div class="clue-grid" id="clue-grid"></div>
+      <div class="clue-texts" id="clue-texts"></div>
+    </div>
+  `;
+  const input = document.getElementById('answer-input');
+  renderKeyboard(document.getElementById('kb-container'), input);
+  renderClueSection(item);
+  input.focus();
+  input.addEventListener('input', () => { document.getElementById('q-err').textContent = ""; });
+  input.addEventListener('keydown', (e) => { if (e.key.length === 1 || e.key === 'Backspace') sfx.keypress(); });
+
+  document.getElementById('skip-btn').addEventListener('click', () => {
+    sfx.skip();
+    const rec = { text: null, skipped: true, auto: false, manual: null, cluesUsed: currentClueState.used };
+    p.answers.push(rec);
+    saveSession(session);
+    lastFeedback = { record: rec, item, participant: p };
+    currentClueState = { qIndex: -1, used: 0, revealed: [false, false, false, false] };
+    view = "feedback";
+    renderApp();
+  });
+  document.getElementById('submit-btn').addEventListener('click', () => {
+    const val = input.value.trim();
+    if (!val) { document.getElementById('q-err').textContent = "Type an answer, or tap Skip chest"; return; }
+    sfx.open();
+    const auto = isMatch(val, item.accept);
+    const rec = { text: val, skipped: false, auto, manual: null, cluesUsed: currentClueState.used };
+    p.answers.push(rec);
+    saveSession(session);
+    lastFeedback = { record: rec, item, participant: p };
+    currentClueState = { qIndex: -1, used: 0, revealed: [false, false, false, false] };
+    view = "feedback";
+    renderApp();
+  });
+}
+
+/* ================= FEEDBACK (between questions) ================= */
+function renderFeedback() {
+  const { record, participant } = lastFeedback;
+  const isLast = participant.answers.length >= QUESTIONS.length;
+  const earned = pointsForRecord(record);
+  let emoji = "🪙", text = "Chest unlocked!", sub = "You found gold inside.", fx = "fx-correct";
+  if (record.skipped) { emoji = "⏭️"; text = "Chest left unopened."; sub = "You moved on to the next stop."; fx = "fx-skip"; }
+  else if (!effectiveCorrect(record)) { emoji = "💨"; text = "Empty chest."; sub = "No treasure this time — onward!"; fx = "fx-wrong"; }
+  else if (record.cluesUsed > 0) { sub = `You used ${record.cluesUsed} clue${record.cluesUsed === 1 ? "" : "s"}, so this chest paid out less gold.`; }
+
+  const pointsLine = record.skipped ? "" : `<p class="feedback-points">${earned > 0 ? "+" + earned : "+0"} points${!effectiveCorrect(record) ? "" : (record.cluesUsed > 0 ? ` (out of ${POINTS_PER_QUESTION}, ${record.cluesUsed} clue${record.cluesUsed===1?"":"s"} used)` : "")}</p>`;
+
+  card.innerHTML = `
+    <div class="feedback-hero">
+      <div class="feedback-emoji ${fx}">${emoji}</div>
+      <p class="feedback-text">${text}</p>
+      ${pointsLine}
+      <p class="feedback-sub">${sub} Current gold: ${computeScore(participant)} point${computeScore(participant) === 1 ? "" : "s"}.</p>
+      <button class="btn-primary btn-block" id="continue-btn">${isLast ? "🏁 Reveal my final treasure" : "Continue the expedition →"}</button>
+    </div>
+  `;
+  if (!record.skipped) { if (effectiveCorrect(record)) sfx.correct(); else sfx.wrong(); }
+  else sfx.skip();
+  document.getElementById('continue-btn').addEventListener('click', () => {
+    sfx.navigate();
+    if (isLast) {
+      addHistoryEntry({ name: participant.name, score: computeScore(participant), total: MAX_SCORE, correctCount: computeCorrectCount(participant), skips: computeSkips(participant), date: new Date().toISOString() });
+      viewingParticipantId = participant.id;
+      view = "result";
+      sfx.finish();
+    } else {
+      view = "quiz";
+    }
+    renderApp();
+  });
+}
+
+/* ================= RESULT screen ================= */
+function getCompliment(pct) {
+  if (pct === 100) return { emoji: "🏆", badge: "💎 Diamond Treasure Hunter", text: "Perfect score, mashallah! Outstanding knowledge." };
+  if (pct >= 80) return { emoji: "🌟", badge: "🥇 Gold Treasure Hunter", text: "Excellent work, mashallah! You really know your stuff." };
+  if (pct >= 60) return { emoji: "👏", badge: "🥈 Silver Treasure Hunter", text: "Great effort! Solid understanding, mashallah." };
+  if (pct >= 40) return { emoji: "🙂", badge: "🥉 Bronze Treasure Hunter", text: "Good try! A bit more study and you'll ace it next time." };
+  return { emoji: "🧭", badge: "Apprentice Explorer", text: "Every step in learning counts, keep going!" };
+}
+function renderResult() {
+  const p = session.participants.find(x => x.id === viewingParticipantId);
+  const score = computeScore(p);
+  const correctCount = computeCorrectCount(p);
+  const skips = computeSkips(p);
+  const pct = Math.round((score / MAX_SCORE) * 100);
+  const c = getCompliment(pct);
+
+  card.innerHTML = `
+    <div class="score-hero" id="score-hero">
+      <div class="trophy">${c.emoji}</div>
+      <div class="score-ring" id="score-ring" style="--pct:0;">
+        <div class="score-ring-inner"><span class="num" id="score-num">0/${MAX_SCORE}</span></div>
+      </div>
+      <div class="badge-pill">${c.badge}</div>
+      <p class="result-name">${escapeHtml(p.name)}</p>
+      <p class="result-pct">${pct}% (${score}/${MAX_SCORE} pts) &middot; ${correctCount} chest${correctCount === 1 ? "" : "s"} correct${skips ? ` &middot; ${skips} skipped` : ""}</p>
+      <div class="compliment">${c.text}</div>
+    </div>
+    <div class="btn-row">
+      <button id="show-answers-btn" style="flex:1;">📜 Get answer sheet</button>
+      <button id="back-to-map-btn" style="flex:1;">🗺️ Back to treasure map</button>
+    </div>
+    <div id="answer-sheet-wrap"></div>
+  `;
+  const ring = document.getElementById('score-ring');
+  const numEl = document.getElementById('score-num');
+  requestAnimationFrame(() => requestAnimationFrame(() => { ring.style.setProperty('--pct', pct); }));
+  let shown = 0;
+  const stepMs = score > 0 ? Math.max(15, 900 / score) : 0;
+  const counter = setInterval(() => {
+    shown++;
+    numEl.textContent = `${shown}/${MAX_SCORE}`;
+    if (shown >= score) clearInterval(counter);
+  }, stepMs || 600);
+  if (score === 0) numEl.textContent = `0/${MAX_SCORE}`;
+  if (pct >= 80) spawnConfetti(document.getElementById('score-hero'), pct === 100 ? 30 : 20);
+
+  document.getElementById('back-to-map-btn').addEventListener('click', () => { sfx.navigate(); view = "lobby"; renderApp(); });
+  document.getElementById('show-answers-btn').addEventListener('click', (e) => {
+    sfx.click();
+    renderAnswerSheet(p, document.getElementById('answer-sheet-wrap'));
+    e.target.disabled = true;
+    e.target.textContent = "Answer sheet shown below";
+  });
+}
+function renderAnswerSheet(p, wrap) {
+  const items = QUESTIONS.map((item, i) => {
+    const rec = p.answers[i] || { text: null, skipped: true, auto: false, manual: null, cluesUsed: 0 };
+    const correct = effectiveCorrect(rec);
+    const earned = pointsForRecord(rec);
+    const used = cluesUsedFor(rec);
+    const yourRowClass = rec.skipped ? "your skipped" : correct ? "your correct-pick" : "your";
+    const yourTag = rec.skipped ? "Skipped" : correct ? "Correct" : "Your answer";
+    const yourVal = rec.skipped ? "&mdash;" : escapeHtml(rec.text);
+    const overrideTag = (rec.manual !== null && rec.manual !== undefined) ? `<span class="override-tag">admin-reviewed</span>` : "";
+    return `
+      <div class="answer-item">
+        <p class="answer-q"><span>${i + 1}. ${item.q}</span><span class="pts">${rec.skipped ? "0" : earned} / ${POINTS_PER_QUESTION} pts</span></p>
+        <div class="answer-row ${yourRowClass}">
+          <span class="tag">${yourTag}</span>
+          <span class="val">${yourVal}</span>${overrideTag}
+        </div>
+        ${used > 0 ? `
+        <div class="answer-row clues">
+          <span class="tag">Clues used</span>
+          <span class="val">${used} (&minus;${used * CLUE_PENALTY} pts)</span>
+        </div>` : ``}
+        ${!correct ? `
+        <div class="answer-row correct">
+          <span class="tag">Correct answer</span>
+          <span class="val">${escapeHtml(item.correctDisplay.en)} &nbsp;|&nbsp; ${escapeHtml(item.correctDisplay.ar)}</span>
+        </div>` : ``}
+      </div>
+    `;
+  }).join("");
+  wrap.innerHTML = `<div class="answer-sheet"><h2>Answer sheet & correction</h2>${items}</div>`;
+}
+
+/* ================= ADMIN ================= */
+function renderAdminGate() {
+  card.innerHTML = `
+    <span class="label">Enter admin PIN</span>
+    <input type="password" id="admin-pin-input" placeholder="PIN" />
+    <div class="error" id="admin-err"></div>
+    <div class="btn-row">
+      <button id="admin-cancel-btn" style="flex:1;">Cancel</button>
+      <button class="btn-primary" id="admin-enter-btn" style="flex:1;">Enter</button>
+    </div>
+  `;
+  document.getElementById('admin-cancel-btn').addEventListener('click', () => { sfx.click(); view = "lobby"; renderApp(); });
+  document.getElementById('admin-enter-btn').addEventListener('click', () => {
+    const val = document.getElementById('admin-pin-input').value;
+    if (val === (session.pin || "")) { sfx.navigate(); adminUnlocked = true; view = "adminPanel"; renderApp(); }
+    else { sfx.wrong(); document.getElementById('admin-err').textContent = "Incorrect PIN"; }
+  });
+}
+function renderAdminPanel() {
+  const rows = session.participants.map(p => {
+    const status = participantStatus(p);
+    const score = computeScore(p);
+    return `
+      <div class="admin-participant">
+        <div class="admin-participant-head">
+          <span class="p-name">${escapeHtml(p.name)}</span>
+          <span class="p-score">${status === "pending" ? "Not started" : `${score} pts so far (${p.answers.length}/${QUESTIONS.length} answered)`}</span>
+        </div>
+        <button data-pid="${p.id}" class="review-btn btn-block" style="margin-top:8px;">🔍 Review & verify answers</button>
+      </div>
+    `;
+  }).join("");
+  const history = getHistory().slice().reverse().slice(0, 15);
+  const historyRows = history.map(h => `<tr><td>${escapeHtml(h.name)}</td><td>${h.score}/${h.total ?? MAX_SCORE}</td><td>${new Date(h.date).toLocaleString()}</td></tr>`).join("");
+
+  card.innerHTML = `
+    <p class="label" style="margin-bottom:10px;">⚙️ Admin control panel</p>
+    ${rows}
+    <hr class="sep" />
+    <p class="label">🏛 Hall of Fame (all-time, across competitions)</p>
+    ${history.length ? `<table><thead><tr><th>Explorer</th><th>Score</th><th>When</th></tr></thead><tbody>${historyRows}</tbody></table>` : `<p class="empty-note">No completed quizzes yet.</p>`}
+    <div class="danger-zone">
+      <p class="hint" style="margin-bottom:8px;">Clear the Hall of Fame history saved on this device.</p>
+      <button class="btn-block" id="clear-history-btn">🗑️ Clear Hall of Fame</button>
+    </div>
+    <button class="btn-block btn-primary" id="admin-back-btn" style="margin-top:14px;">← Back to treasure map</button>
+  `;
+  card.querySelectorAll('.review-btn').forEach(btn => {
+    btn.addEventListener('click', () => { sfx.navigate(); viewingParticipantId = btn.dataset.pid; view = "adminReview"; renderApp(); });
+  });
+  document.getElementById('clear-history-btn').addEventListener('click', () => {
+    if (confirm("Clear all Hall of Fame history?")) { sfx.click(); localStorage.removeItem(HISTORY_KEY); renderApp(); }
+  });
+  document.getElementById('admin-back-btn').addEventListener('click', () => { sfx.click(); view = "lobby"; renderApp(); });
+}
+function renderAdminReview() {
+  const p = session.participants.find(x => x.id === viewingParticipantId);
+  const rows = QUESTIONS.map((item, i) => {
+    const rec = p.answers[i];
+    if (!rec) return `<div class="admin-q-row"><p class="q-text">${i+1}. ${item.q}</p><p class="a-text hint">Not answered yet.</p></div>`;
+    const autoLabel = rec.skipped ? "Skipped" : (rec.auto ? "Auto: Correct" : "Auto: Incorrect");
+    const manualState = rec.manual;
+    const used = cluesUsedFor(rec);
+    const earned = pointsForRecord(rec);
+    return `
+      <div class="admin-q-row">
+        <p class="q-text">${i+1}. ${item.q} <span class="auto-tag">(${rec.skipped ? "0" : earned} / ${POINTS_PER_QUESTION} pts, ${used} clue${used===1?"":"s"} used)</span></p>
+        <p class="a-text">${rec.skipped ? "<em>Skipped</em>" : escapeHtml(rec.text)} &nbsp; <span class="auto-tag">(${autoLabel})</span></p>
+        <p class="hint" style="margin-bottom:6px;">Correct answer: ${escapeHtml(item.correctDisplay.en)} | ${escapeHtml(item.correctDisplay.ar)}</p>
+        <div class="verdict-btns">
+          <button data-idx="${i}" data-verdict="true" class="verdict-btn ${manualState === true ? 'on-correct' : ''}">✔ Mark correct</button>
+          <button data-idx="${i}" data-verdict="false" class="verdict-btn ${manualState === false ? 'on-wrong' : ''}">✘ Mark incorrect</button>
+          <button data-idx="${i}" data-verdict="clear" class="verdict-btn">↺ Use automatic</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+  card.innerHTML = `
+    <p class="label">Reviewing: ${escapeHtml(p.name)}</p>
+    <p class="hint" style="margin-bottom:10px;">Current score: ${computeScore(p)} / ${MAX_SCORE} pts</p>
+    ${rows}
+    <button class="btn-block btn-primary" id="admin-review-back-btn" style="margin-top:14px;">← Back to admin panel</button>
+  `;
+  card.querySelectorAll('.verdict-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      sfx.click();
+      const idx = parseInt(btn.dataset.idx, 10);
+      const rec = p.answers[idx];
+      if (!rec || rec.skipped) return;
+      if (btn.dataset.verdict === "clear") rec.manual = null;
+      else rec.manual = btn.dataset.verdict === "true";
+      saveSession(session);
+      renderAdminReview();
+    });
+  });
+  document.getElementById('admin-review-back-btn').addEventListener('click', () => { sfx.click(); view = "adminPanel"; renderApp(); });
+}
+
+/* ================= Router ================= */
+document.getElementById('admin-fab-btn').addEventListener('click', () => {
+  if (!session) return;
+  sfx.click();
+  if (session.pin && !adminUnlocked) view = "adminGate";
+  else view = "adminPanel";
+  renderApp();
+});
+
+function renderApp() {
+  if (!session) { view = "setup"; renderSetup(); return; }
+  switch (view) {
+    case "setup": renderSetup(); break;
+    case "lobby": renderLobby(); break;
+    case "quiz": renderQuiz(); break;
+    case "feedback": renderFeedback(); break;
+    case "result": renderResult(); break;
+    case "adminGate": renderAdminGate(); break;
+    case "adminPanel": renderAdminPanel(); break;
+    case "adminReview": renderAdminReview(); break;
+    default: renderLobby();
+  }
+}
+renderApp();
+</script>
+</body>
+</html>
