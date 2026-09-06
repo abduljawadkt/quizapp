@@ -1,4 +1,5 @@
-import { Archive, CheckCircle2, FileQuestion, ListPlus, PlusCircle } from "lucide-react";
+import Link from "next/link";
+import { Archive, CheckCircle2, FileQuestion, ListPlus, Pencil, PlusCircle } from "lucide-react";
 import { createQuestion, toggleQuestion } from "@/app/actions/admin";
 import { AdminTopbar } from "@/components/AdminTopbar";
 import { requireAdmin } from "@/lib/auth";
@@ -84,6 +85,7 @@ export default async function QuestionsPage({ searchParams }: { searchParams?: P
                   <th>Answers</th>
                   <th>Clues</th>
                   <th>Status</th>
+                  <th>Edit</th>
                 </tr>
               </thead>
               <tbody>
@@ -107,6 +109,12 @@ export default async function QuestionsPage({ searchParams }: { searchParams?: P
                           {question.active ? "Active" : "Archived"}
                         </button>
                       </form>
+                    </td>
+                    <td>
+                      <Link className="button success" href={`/admin/questions/${question.id}/edit`}>
+                        <Pencil size={15} />
+                        Edit
+                      </Link>
                     </td>
                   </tr>
                 ))}

@@ -21,6 +21,27 @@ const questionSchema = z.object({
   clues: z.string().min(1),
 });
 
+const eventSettingsSchema = z.object({
+  eventId: z.string().min(1),
+  title: z.string().min(2),
+  quizSetId: z.string().min(1),
+  maxParticipants: z.coerce.number().int().min(1).max(10000),
+  status: z.enum(["draft", "open", "closed"]),
+  showAnswers: z.union([z.literal("on"), z.literal("true")]).optional(),
+});
+
+function parseLines(value: string, splitCommas = false) {
+  return value
+    .split(splitCommas ? /\r?\n|,/ : /\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function adminReturnPath(value: FormDataEntryValue | null) {
+  const path = String(value ?? "/admin");
+  return path.startsWith("/admin") ? path : "/admin";
+}
+
 export async function loginAdmin(formData: FormData) {
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
@@ -43,14 +64,8 @@ export async function createQuestion(formData: FormData) {
   if (!parsed.success) redirect("/admin/questions?error=question");
 
   const data = parsed.data;
-  const variants = data.variants
-    .split(/\r?\n|,/)
-    .map((value) => value.trim())
-    .filter(Boolean);
-  const clues = data.clues
-    .split(/\r?\n/)
-    .map((value) => value.trim())
-    .filter(Boolean);
+  const variants = parseLines(data.variants, true);
+  const clues = parseLines(data.clues);
 
   if (!variants.length || !clues.length) redirect("/admin/questions?error=question");
 
@@ -85,6 +100,68 @@ export async function createQuestion(formData: FormData) {
 
   revalidatePath("/admin/questions");
   redirect("/admin/questions?created=1");
+}
+
+export async function updateQuestion(formData: FormData) {
+  const admin = await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  const parsed = questionSchema.safeParse(Object.fromEntries(formData));
+  if (!id || !parsed.success) redirect(`/admin/questions/${id}/edit?error=question`);
+
+  const data = parsed.data;
+  const variants = parseLines(data.variants, true);
+  const clues = parseLines(data.clues);
+  if (!variants.length || !clues.length) redirect(`/admin/questions/${id}/edit?error=question`);
+
+  await db.$transaction(async (tx) => {
+    await tx.question.update({
+      where: { id },
+      data: {
+        quizSetId: data.quizSetId,
+        prompt: data.prompt,
+        correctDisplayEn: data.correctDisplayEn,
+        correctDisplayAr: data.correctDisplayAr || null,
+        correctDisplayMl: data.correctDisplayMl || null,
+        category: data.category || null,
+        difficulty: data.difficulty,
+        points: data.points,
+      },
+    });
+
+    await tx.answerVariant.deleteMany({ where: { questionId: id } });
+    await tx.answerVariant.createMany({
+      data: variants.map((value) => ({
+        questionId: id,
+        value,
+        normalized: normalizeAnswer(value),
+        language: detectAnswerLanguage(value),
+      })),
+    });
+
+    for (const [index, text] of clues.entries()) {
+      await tx.clue.upsert({
+        where: { questionId_sortOrder: { questionId: id, sortOrder: index } },
+        update: { text, penalty: 1 },
+        create: { questionId: id, text, sortOrder: index, penalty: 1 },
+      });
+    }
+
+    await tx.clue.deleteMany({
+      where: {
+        questionId: id,
+        sortOrder: { gte: clues.length },
+        reveals: { none: {} },
+      },
+    });
+
+    await tx.auditLog.create({
+      data: { adminId: admin.id, action: "question.update", entity: "question", entityId: id },
+    });
+  });
+
+  revalidatePath("/admin/questions");
+  revalidatePath(`/admin/questions/${id}/edit`);
+  redirect(`/admin/questions/${id}/edit?updated=1`);
 }
 
 export async function toggleQuestion(formData: FormData) {
@@ -131,7 +208,8 @@ export async function updateEventStatus(formData: FormData) {
   const admin = await requireAdmin();
   const eventId = String(formData.get("eventId") ?? "");
   const status = String(formData.get("status") ?? "draft");
-  if (!["draft", "open", "closed"].includes(status)) return;
+  const returnTo = adminReturnPath(formData.get("returnTo"));
+  if (!["draft", "open", "closed"].includes(status)) redirect(`${returnTo}?error=status`);
 
   await db.event.update({ where: { id: eventId }, data: { status } });
   await db.auditLog.create({
@@ -140,6 +218,34 @@ export async function updateEventStatus(formData: FormData) {
 
   revalidatePath("/admin");
   revalidatePath(`/admin/events/${eventId}`);
+  redirect(`${returnTo}?updated=status`);
+}
+
+export async function updateEventSettings(formData: FormData) {
+  const admin = await requireAdmin();
+  const parsed = eventSettingsSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) redirect("/admin?error=event");
+
+  const data = parsed.data;
+  const attempts = await db.attempt.count({ where: { eventId: data.eventId } });
+
+  await db.event.update({
+    where: { id: data.eventId },
+    data: {
+      title: data.title,
+      quizSetId: attempts === 0 ? data.quizSetId : undefined,
+      maxParticipants: data.maxParticipants,
+      status: data.status,
+      showAnswers: Boolean(data.showAnswers),
+    },
+  });
+  await db.auditLog.create({
+    data: { adminId: admin.id, action: "event.update", entity: "event", entityId: data.eventId },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath(`/admin/events/${data.eventId}`);
+  redirect(`/admin/events/${data.eventId}?updated=settings`);
 }
 
 export async function updateManualVerdict(formData: FormData) {

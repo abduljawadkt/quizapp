@@ -181,10 +181,13 @@ The event detail page shows:
 - Event status
 - Participant count
 - Question count
+- Event settings editor
 - Leaderboard
 - Answer review queue
 
-Use this page during the live quiz to monitor progress.
+Use this page during the live quiz to monitor progress, change status, edit event title, change participant limit, and control whether answers are shown after completion.
+
+Visible `Edit` buttons are available from the admin dashboard event list. Question edit buttons are available from `/admin/questions`.
 
 ## 8. Manual Answer Review
 

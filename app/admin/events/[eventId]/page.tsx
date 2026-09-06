@@ -1,33 +1,43 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ExternalLink, KeyRound, Lock, Medal, Radio, Star, Trophy, Users } from "lucide-react";
+import { ExternalLink, FileQuestion, KeyRound, Lock, Medal, Radio, Save, Star, Trophy, Users } from "lucide-react";
 import { CopyButton } from "@/components/CopyButton";
-import { updateEventStatus, updateManualVerdict } from "@/app/actions/admin";
+import { updateEventSettings, updateEventStatus, updateManualVerdict } from "@/app/actions/admin";
 import { AdminTopbar } from "@/components/AdminTopbar";
 import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { effectiveCorrect } from "@/lib/scoring";
 
-export default async function EventDetailPage({ params }: { params: Promise<{ eventId: string }> }) {
+export default async function EventDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ eventId: string }>;
+  searchParams?: Promise<Record<string, string | undefined>>;
+}) {
   await requireAdmin();
   const { eventId } = await params;
-  const event = await db.event.findUnique({
-    where: { id: eventId },
-    include: {
-      quizSet: { include: { questions: { where: { active: true } } } },
-      participants: { orderBy: { createdAt: "asc" } },
-      attempts: {
-        orderBy: { startedAt: "desc" },
-        include: {
-          participant: true,
-          responses: {
-            orderBy: { questionIndex: "asc" },
-            include: { question: true },
+  const query = (await searchParams) ?? {};
+  const [event, quizSets] = await Promise.all([
+    db.event.findUnique({
+      where: { id: eventId },
+      include: {
+        quizSet: { include: { questions: { where: { active: true } } } },
+        participants: { orderBy: { createdAt: "asc" } },
+        attempts: {
+          orderBy: { startedAt: "desc" },
+          include: {
+            participant: true,
+            responses: {
+              orderBy: { questionIndex: "asc" },
+              include: { question: true },
+            },
           },
         },
       },
-    },
-  });
+    }),
+    db.quizSet.findMany({ orderBy: { createdAt: "asc" } }),
+  ]);
 
   if (!event) notFound();
 
@@ -60,6 +70,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ ev
               <form action={updateEventStatus} key={status}>
                 <input type="hidden" name="eventId" value={event.id} />
                 <input type="hidden" name="status" value={status} />
+                <input type="hidden" name="returnTo" value={`/admin/events/${event.id}`} />
                 <button type="submit" className={event.status === status ? "primary" : ""}>
                   {status === "closed" ? <Lock size={15} /> : <Radio size={15} />}
                   {status}
@@ -70,6 +81,51 @@ export default async function EventDetailPage({ params }: { params: Promise<{ ev
         </section>
 
         <section className="card span-8">
+          <div className="spread">
+            <h2>Edit Event</h2>
+            <Link className="button" href="/admin/questions"><FileQuestion size={16} /> Edit questions</Link>
+          </div>
+          {query.updated === "settings" ? <p className="notice">Event settings saved.</p> : null}
+          {query.updated === "status" ? <p className="notice">Event status updated.</p> : null}
+          <form action={updateEventSettings}>
+            <input type="hidden" name="eventId" value={event.id} />
+            <div className="row">
+              <div className="field" style={{ flex: 1 }}>
+                <label htmlFor="title">Event title</label>
+                <input id="title" name="title" defaultValue={event.title} required />
+              </div>
+              <div className="field" style={{ width: 170 }}>
+                <label htmlFor="maxParticipants">Max participants</label>
+                <input id="maxParticipants" name="maxParticipants" type="number" min="1" defaultValue={event.maxParticipants} />
+              </div>
+            </div>
+            <div className="row">
+              <div className="field" style={{ flex: 1 }}>
+                <label htmlFor="quizSetId">Quiz set</label>
+                {event.attempts.length ? <input type="hidden" name="quizSetId" value={event.quizSetId} /> : null}
+                <select id="quizSetId" name="quizSetId" defaultValue={event.quizSetId} disabled={event.attempts.length > 0}>
+                  {quizSets.map((set) => <option value={set.id} key={set.id}>{set.title}</option>)}
+                </select>
+                {event.attempts.length ? <span className="muted">Quiz set is locked after participants start playing.</span> : null}
+              </div>
+              <div className="field" style={{ width: 170 }}>
+                <label htmlFor="status">Status</label>
+                <select id="status" name="status" defaultValue={event.status}>
+                  <option value="draft">Draft</option>
+                  <option value="open">Open</option>
+                  <option value="closed">Closed</option>
+                </select>
+              </div>
+            </div>
+            <label className="row" style={{ marginBottom: 14 }}>
+              <input name="showAnswers" type="checkbox" defaultChecked={event.showAnswers} style={{ width: "auto" }} />
+              <span className="muted">Show answer sheet after completion</span>
+            </label>
+            <button type="submit" className="primary"><Save size={16} /> Save event</button>
+          </form>
+        </section>
+
+        <section className="card span-12">
           <div className="spread">
             <h2>Leaderboard</h2>
             <span className="pill open"><Trophy size={14} /> {leaderboard.length} attempts</span>

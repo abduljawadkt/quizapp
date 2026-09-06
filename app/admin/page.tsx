@@ -1,12 +1,13 @@
 import Link from "next/link";
-import { CalendarPlus, CheckCircle2, ExternalLink, FileQuestion, Lock, Radio, Users } from "lucide-react";
+import { CalendarPlus, CheckCircle2, ExternalLink, FileQuestion, Lock, Pencil, Radio, Users } from "lucide-react";
 import { createEvent, updateEventStatus } from "@/app/actions/admin";
 import { AdminTopbar } from "@/components/AdminTopbar";
 import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 
-export default async function AdminDashboard() {
+export default async function AdminDashboard({ searchParams }: { searchParams?: Promise<Record<string, string | undefined>> }) {
   await requireAdmin();
+  const params = (await searchParams) ?? {};
   const [events, quizSets, counts] = await Promise.all([
     db.event.findMany({
       orderBy: { createdAt: "desc" },
@@ -84,6 +85,7 @@ export default async function AdminDashboard() {
             <h2>Events</h2>
             <Link className="button" href="/admin/questions"><FileQuestion size={16} /> Manage questions</Link>
           </div>
+          {params.updated === "status" ? <p className="notice">Event status updated.</p> : null}
           {events.length ? (
             <div className="event-list">
               {events.map((event) => (
@@ -99,10 +101,12 @@ export default async function AdminDashboard() {
                   </div>
                   <div className="row" style={{ justifyContent: "flex-end" }}>
                     <Link className="button" href={`/join/${event.joinCode}`}><ExternalLink size={16} /> Join</Link>
+                    <Link className="button success" href={`/admin/events/${event.id}`}><Pencil size={16} /> Edit</Link>
                     {["draft", "open", "closed"].map((status) => (
                       <form action={updateEventStatus} key={status}>
                         <input type="hidden" name="eventId" value={event.id} />
                         <input type="hidden" name="status" value={status} />
+                        <input type="hidden" name="returnTo" value="/admin" />
                         <button type="submit" className={event.status === status ? "primary" : ""} disabled={event.status === status}>
                           {status === "closed" ? <Lock size={15} /> : <Radio size={15} />}
                           {status}
