@@ -56,7 +56,7 @@ export default async function QuestionsPage({ searchParams }: { searchParams?: P
               </div>
               <div className="field" style={{ width: 130 }}>
                 <label htmlFor="points">Points</label>
-                <input id="points" name="points" type="number" min="1" defaultValue="10" />
+                <input id="points" name="points" type="number" min="1" defaultValue="5" />
               </div>
             </div>
             <div className="field">

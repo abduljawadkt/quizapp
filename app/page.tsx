@@ -40,7 +40,7 @@ export default async function Home({ searchParams }: { searchParams?: Promise<Re
           <form action={joinEvent}>
             <div className="field">
               <label htmlFor="code">Event code</label>
-              <input id="code" name="code" defaultValue={code} placeholder="Example: DEMO01" />
+              <input id="code" name="code" defaultValue={code} placeholder="Example: YASEEN" />
             </div>
             <div className="field">
               <label htmlFor="name">Explorer name</label>

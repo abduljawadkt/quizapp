@@ -71,7 +71,7 @@ export function pointsForResponse(response: {
   question?: { points: number; clues?: { penalty: number }[] };
 }) {
   if (!effectiveCorrect(response)) return 0;
-  const base = response.question?.points ?? 10;
-  const penalty = response.question?.clues?.[0]?.penalty ?? 2;
+  const base = response.question?.points ?? 5;
+  const penalty = response.question?.clues?.[0]?.penalty ?? 1;
   return Math.max(0, base - response.cluesUsed * penalty);
 }

@@ -66,3 +66,7 @@ npm run db:push
 npm run db:seed
 npm run db:studio
 ```
+
+## Admin Workflow
+
+See [ADMIN_WORKFLOW.md](./ADMIN_WORKFLOW.md) for the full quiz setup and live event workflow.

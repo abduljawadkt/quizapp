@@ -16,7 +16,7 @@ const questionSchema = z.object({
   correctDisplayMl: z.string().optional(),
   category: z.string().optional(),
   difficulty: z.string().default("easy"),
-  points: z.coerce.number().int().min(1).max(100).default(10),
+  points: z.coerce.number().int().min(1).max(100).default(5),
   variants: z.string().min(1),
   clues: z.string().min(1),
 });
@@ -74,7 +74,7 @@ export async function createQuestion(formData: FormData) {
         })),
       },
       clues: {
-        create: clues.map((text, index) => ({ text, sortOrder: index, penalty: 2 })),
+        create: clues.map((text, index) => ({ text, sortOrder: index, penalty: 1 })),
       },
     },
   });

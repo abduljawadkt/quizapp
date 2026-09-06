@@ -39,7 +39,7 @@ model Question {
   correctDisplayMl String?
   category         String?
   difficulty       String   @default("easy")
-  points           Int      @default(10)
+  points           Int      @default(5)
   sortOrder        Int      @default(0)
   active           Boolean  @default(true)
   createdAt        DateTime @default(now())
@@ -72,7 +72,7 @@ model Clue {
   questionId String
   text       String
   sortOrder  Int
-  penalty    Int      @default(2)
+  penalty    Int      @default(1)
   createdAt  DateTime @default(now())
 
   question Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)

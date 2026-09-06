@@ -71,6 +71,93 @@ const questions = [
   },
 ];
 
+const yaseenQuestions = [
+  {
+    prompt: "സൂറ: യാസീനിൽ മൂന്ന് തവണ ഉപയോഗിച്ച പദം, രണ്ട് സ്ഥലങ്ങളിൽ അന്ത്യനാളുമായി ബന്ധപ്പെടുകയും ഒരിടത്ത് ദുനിയാവുമായി ബന്ധപ്പെടുത്തിയും ഉപയോഗിച്ചിരിക്കുന്നു. ഏതാണ് ആ പദം?",
+    variants: ["صَيْحَة", "صيحة", "sayhah", "saihah", "ṣayḥah", "സൈഹ", "സൈഹഃ", "ശബ്ദം", "ഘോരനാദം"],
+    en: "Sayhah",
+    ar: "صَيْحَة",
+    ml: "ശബ്ദം / ഘോരനാദം",
+    category: "Surah Yaseen",
+    difficulty: "medium",
+    clues: [
+      "ദുനിയാവുമായി ബന്ധപ്പെടുത്തി പറഞ്ഞത് ശിക്ഷയുടെ രൂപമായാണ്.",
+      "ഒരു ഊർജ്ജ വിഭാഗമാണ്.",
+      "ഇതുകൊണ്ട് ജനതകളെ അല്ലാഹു നശിപ്പിച്ചു എന്ന് വിവിധ സൂറത്തുകളിൽ അല്ലാഹു സൂചിപ്പിച്ചിട്ടുണ്ട്.",
+    ],
+  },
+  {
+    prompt: "ഒരു പ്രവാചകൻ്റെ ചരിത്രത്തിൽ വലിയ പ്രാധാന്യമുള്ള ഈ വസ്തുവെക്കുറിച്ച് 2 അധ്യായങ്ങളിലും പരാമർശിക്കുന്നുണ്ട്. ഏതാണ് ആ വസ്തു?",
+    variants: ["ship", "boat", "vessel", "കപ്പൽ", "കപ്പല്", "നൗക", "سفينة"],
+    en: "Ship",
+    ar: "سفينة",
+    ml: "കപ്പൽ",
+    category: "Quran Objects",
+    difficulty: "easy",
+    clues: [
+      "അല്ലാഹു മനുഷ്യർക്ക് നൽകിയ അനുഗ്രഹമായിട്ടാണ് രണ്ട് സൂറത്തുകളിലും വന്നിട്ടുള്ളത്.",
+      "ഈ വസ്തുവിനെ സംബന്ധിച്ച് അല്ലാഹുവിന്റെ ശിക്ഷയെക്കുറിച്ചുള്ള താക്കീതും നൽകിയിട്ടുണ്ട്.",
+      "മനുഷ്യർ യാത്രക്ക് ഉപയോഗിക്കുന്നു.",
+    ],
+  },
+  {
+    prompt: "ഖുർആനിൽ ഏകവചനമായും ദ്വിവചനമായും ബഹുവചനമായും ഉപയോഗിച്ച പദം; സൂറ യാസീനിൽ അതിൻറെ ബഹുവചനമാണ് ഉപയോഗിച്ചിരിക്കുന്നത്. ഏതാണ് ആ പദം?",
+    variants: ["قُرُون", "قرون", "qurun", "quroon", "qurūn", "തലമുറകൾ", "തലമുറകള്", "ജനതകൾ", "ജനതകള്"],
+    en: "Qurun",
+    ar: "قُرُون",
+    ml: "തലമുറകൾ / ജനതകൾ",
+    category: "Surah Yaseen",
+    difficulty: "hard",
+    clues: [
+      "യുവജനം ആയി ഉപയോഗിക്കുമ്പോൾ ഖുർആനിൽ പറഞ്ഞ ഒരു രാജാവിൻറെ പേരിൻറെ ഒരു ഭാഗമാകും.",
+      "അല്ലാഹു നശിപ്പിച്ചു എന്ന് അതിനെക്കുറിച്ച് പറയുന്നുണ്ട്.",
+      "അതിന്റെ ഏകവചനത്തിന് കൊമ്പ് എന്ന അർത്ഥമുണ്ട്.",
+    ],
+  },
+  {
+    prompt: "സുറത്തു ലുഖ്മാനിലും സൂറത്തു യാസീനിലും വന്ന പ്രകൃതിയിലെ ഒരു വസ്തുവാണിത്. ഏതാണ് അത്?",
+    variants: ["tree", "wood", "മരം", "വൃക്ഷം", "شجر", "الشجر"],
+    en: "Tree",
+    ar: "شجر",
+    ml: "മരം",
+    category: "Nature in Quran",
+    difficulty: "easy",
+    clues: [
+      "അത് ഒരു ഉപകരണമാക്കി മാറ്റിയാൽ എന്ന് പറഞ്ഞു.",
+      "ഒരു നിറവുമായി ബന്ധപ്പെടുത്തി പറഞ്ഞു.",
+      "അതിൽ നിന്ന് തീ ഉണ്ടാകുന്നു എന്ന് പറഞ്ഞു.",
+    ],
+  },
+  {
+    prompt: "സൂറ യാസീനിൽ പറഞ്ഞ ഒരു വീട്ടുപകരണം. ഏതാണ് അത്?",
+    variants: ["أَرَائِك", "ارائك", "araik", "ara'ik", "araaik", "വിശ്രമാസനങ്ങൾ", "വിശ്രമാസനങ്ങള്", "അലങ്കരിച്ച ഇരിപ്പിടങ്ങൾ", "ഇരിപ്പിടങ്ങൾ", "ഇരിപ്പിടങ്ങള്"],
+    en: "Ara'ik",
+    ar: "أَرَائِك",
+    ml: "വിശ്രമാസനങ്ങൾ / അലങ്കരിച്ച ഇരിപ്പിടങ്ങൾ",
+    category: "Surah Yaseen",
+    difficulty: "medium",
+    clues: [
+      "സ്വർഗ്ഗത്തിൽ അതുകൊണ്ട് എന്ന് സൂറത്ത് യാസീനിൽ പറഞ്ഞിട്ടുണ്ട്.",
+      "മനുഷ്യൻ വിശ്രമത്തിനു വേണ്ടി ഉപയോഗിക്കുന്നതാണ്.",
+      "ഇരിക്കാൻ ഉപയോഗിക്കുന്ന ഒന്ന്.",
+    ],
+  },
+  {
+    prompt: "സൂറ ലുഖ്മാനിലും സൂറ യാസീനിലും കൂടെ ഒരുതവണ മാത്രമേ ഈ പ്രാപഞ്ചിക പ്രതിഭാസത്തെക്കുറിച്ച് പറയുന്നുള്ളൂ. ആ പ്രതിഭാസത്തെ സൂചിപ്പിക്കുന്ന അറബി പദം ഏതാണ്?",
+    variants: ["مَوْج", "موج", "mawj", "wave", "waves", "തിരമാല", "തിരമാലകൾ", "തിരമാലകള്"],
+    en: "Mawj",
+    ar: "مَوْج",
+    ml: "തിരമാല",
+    category: "Surah Luqman",
+    difficulty: "medium",
+    clues: [
+      "ഇതിനെ വമ്പിച്ച പർവതങ്ങളോട് ഉപമിച്ചു.",
+      "ജലവുമായി ബന്ധപ്പെട്ടതാണ്.",
+      "സൂറ ലുഖ്മാൻ 32-ാം ആയത്തിലാണ് ഈ പദം വരുന്നത്.",
+    ],
+  },
+];
+
 function normalizeAnswer(value) {
   const arabicDigits = "٠١٢٣٤٥٦٧٨٩";
   const malayalamDigits = "൦൧൨൩൪൫൬൭൮൯";
@@ -89,6 +176,32 @@ function detectAnswerLanguage(value) {
   if (/[\u0D00-\u0D7F]/.test(value)) return "ml";
   if (/[\u0600-\u06FF]/.test(value)) return "ar";
   return "en";
+}
+
+async function replaceQuestions(quizSetId, items) {
+  await prisma.question.deleteMany({ where: { quizSetId } });
+
+  for (const [index, q] of items.entries()) {
+    await prisma.question.create({
+      data: {
+        quizSetId,
+        prompt: q.prompt,
+        correctDisplayEn: q.en,
+        correctDisplayAr: q.ar,
+        correctDisplayMl: q.ml,
+        category: q.category ?? "Islamic Knowledge",
+        difficulty: q.difficulty ?? "easy",
+        points: 5,
+        sortOrder: index,
+        answerVariants: {
+          create: q.variants.map((value) => ({ value, normalized: normalizeAnswer(value), language: detectAnswerLanguage(value) })),
+        },
+        clues: {
+          create: q.clues.map((text, clueIndex) => ({ text, sortOrder: clueIndex, penalty: 1 })),
+        },
+      },
+    });
+  }
 }
 
 async function main() {
@@ -112,29 +225,7 @@ async function main() {
     },
   });
 
-  await prisma.question.deleteMany({ where: { quizSetId: quizSet.id } });
-
-  for (const [index, q] of questions.entries()) {
-    await prisma.question.create({
-      data: {
-        quizSetId: quizSet.id,
-        prompt: q.prompt,
-        correctDisplayEn: q.en,
-        correctDisplayAr: q.ar,
-        correctDisplayMl: q.ml,
-        category: "Islamic Knowledge",
-        difficulty: "easy",
-        points: 10,
-        sortOrder: index,
-        answerVariants: {
-          create: q.variants.map((value) => ({ value, normalized: normalizeAnswer(value), language: detectAnswerLanguage(value) })),
-        },
-        clues: {
-          create: q.clues.map((text, clueIndex) => ({ text, sortOrder: clueIndex, penalty: 2 })),
-        },
-      },
-    });
-  }
+  await replaceQuestions(quizSet.id, questions);
 
   await prisma.event.upsert({
     where: { joinCode: "DEMO01" },
@@ -149,7 +240,41 @@ async function main() {
     },
   });
 
-  console.log(`Seeded admin ${email} / ${password} and demo event code DEMO01`);
+  const yaseenQuizSet = await prisma.quizSet.upsert({
+    where: { id: "surah-yaseen-luqman-treasure-hunt" },
+    update: {
+      title: "Surah Yaseen & Luqman Treasure Hunt",
+      description: "Malayalam Quran quiz based on Surah Yaseen and Surah Luqman clues.",
+    },
+    create: {
+      id: "surah-yaseen-luqman-treasure-hunt",
+      title: "Surah Yaseen & Luqman Treasure Hunt",
+      description: "Malayalam Quran quiz based on Surah Yaseen and Surah Luqman clues.",
+    },
+  });
+
+  await replaceQuestions(yaseenQuizSet.id, yaseenQuestions);
+
+  await prisma.event.upsert({
+    where: { joinCode: "YASEEN" },
+    update: {
+      title: "Surah Yaseen Quiz Challenge",
+      status: "open",
+      quizSetId: yaseenQuizSet.id,
+      maxParticipants: 100,
+      showAnswers: true,
+    },
+    create: {
+      title: "Surah Yaseen Quiz Challenge",
+      joinCode: "YASEEN",
+      status: "open",
+      maxParticipants: 100,
+      showAnswers: true,
+      quizSetId: yaseenQuizSet.id,
+    },
+  });
+
+  console.log(`Seeded admin ${email} / ${password}, demo event code DEMO01, and Surah quiz event code YASEEN`);
 }
 
 main()

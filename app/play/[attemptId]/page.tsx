@@ -58,7 +58,8 @@ export default async function PlayPage({
   });
   const nextClueAvailable = reveals.length < question.clues.length;
   const progressPct = Math.round((attempt.currentIndex / questions.length) * 100);
-  const possibleNow = Math.max(0, question.points - reveals.length * (question.clues[0]?.penalty ?? 2));
+  const cluePenalty = question.clues[0]?.penalty ?? 1;
+  const possibleNow = Math.max(0, question.points - reveals.length * cluePenalty);
 
   return (
     <main className="shell">
@@ -97,7 +98,7 @@ export default async function PlayPage({
             <div>
               <span className="eyebrow"><Sparkles size={15} /> Chest {attempt.currentIndex + 1}</span>
               <h1 style={{ maxWidth: "none" }}>{question.prompt}</h1>
-              <p className="muted">Worth <span className="points-value">{question.points} points</span> · clue cost {question.clues[0]?.penalty ?? 2} points</p>
+              <p className="muted">Worth <span className="points-value">{question.points} points</span> · clue cost {cluePenalty} {cluePenalty === 1 ? "point" : "points"}</p>
             </div>
             <span className="pill open"><Trophy size={14} /> Level {attempt.currentIndex + 1}</span>
           </div>
