@@ -16,7 +16,7 @@ A database-backed treasure-hunt quiz platform with participant play screens, clu
 ```bash
 npm install
 cp .env.example .env
-npx prisma db push
+npx prisma migrate deploy
 npm run db:seed
 npm run dev -- -p 3001
 ```
@@ -36,24 +36,24 @@ Change these before production.
 
 ## Database
 
-Local development currently uses SQLite:
+This project uses Supabase Postgres through Prisma:
 
 ```env
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://postgres.PROJECT_REF:YOUR_PASSWORD@REGION.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1"
+DIRECT_URL="postgresql://postgres.PROJECT_REF:YOUR_PASSWORD@REGION.pooler.supabase.com:5432/postgres"
 ```
 
-For Supabase Postgres, update `prisma/schema.prisma` to use `provider = "postgresql"` and set:
-
-```env
-DATABASE_URL="postgresql://..."
-DIRECT_URL="postgresql://..."
-```
-
-Then run:
+For a new Supabase database, create and apply the first migration:
 
 ```bash
 npx prisma migrate dev --name init_supabase
 npm run db:seed
+```
+
+For deployment environments, apply committed migrations:
+
+```bash
+npx prisma migrate deploy
 ```
 
 ## Scripts
