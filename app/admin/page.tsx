@@ -11,12 +11,17 @@ export default async function AdminDashboard({ searchParams }: { searchParams?: 
   const [events, quizSets, counts] = await Promise.all([
     db.event.findMany({
       orderBy: { createdAt: "desc" },
-      include: {
-        quizSet: true,
+      select: {
+        id: true,
+        title: true,
+        joinCode: true,
+        status: true,
+        maxParticipants: true,
+        quizSet: { select: { title: true } },
         _count: { select: { participants: true, attempts: true } },
       },
     }),
-    db.quizSet.findMany({ orderBy: { createdAt: "asc" } }),
+    db.quizSet.findMany({ orderBy: { createdAt: "asc" }, select: { id: true, title: true } }),
     db.$transaction([
       db.question.count(),
       db.participant.count(),

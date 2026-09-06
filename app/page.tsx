@@ -1,15 +1,11 @@
 import Link from "next/link";
 import { ArrowRight, Brain, KeyRound, ShieldCheck, Sparkles, Timer, Trophy, Users, Zap } from "lucide-react";
 import { joinEvent } from "@/app/actions/play";
-import { db } from "@/lib/db";
+import { getOpenEvents } from "@/lib/publicData";
 
 export default async function Home({ searchParams }: { searchParams?: Promise<Record<string, string | undefined>> }) {
   const params = (await searchParams) ?? {};
-  const events = await db.event.findMany({
-    where: { status: "open" },
-    orderBy: { createdAt: "desc" },
-    include: { quizSet: true, _count: { select: { participants: true } } },
-  });
+  const events = await getOpenEvents();
   const code = params.code?.toUpperCase() ?? events[0]?.joinCode ?? "";
   const totalParticipants = events.reduce((sum, event) => sum + event._count.participants, 0);
 

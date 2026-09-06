@@ -15,17 +15,29 @@ export default async function PlayPage({
   const qp = (await searchParams) ?? {};
   const attempt = await db.attempt.findUnique({
     where: { id: attemptId },
-    include: {
-      participant: true,
-      responses: { orderBy: { questionIndex: "asc" } },
+    select: {
+      id: true,
+      status: true,
+      currentIndex: true,
+      score: true,
+      participant: { select: { name: true } },
       event: {
-        include: {
+        select: {
+          title: true,
           quizSet: {
-            include: {
+            select: {
               questions: {
                 where: { active: true },
                 orderBy: { sortOrder: "asc" },
-                include: { clues: { orderBy: { sortOrder: "asc" } } },
+                select: {
+                  id: true,
+                  prompt: true,
+                  points: true,
+                  clues: {
+                    orderBy: { sortOrder: "asc" },
+                    select: { id: true, text: true, penalty: true },
+                  },
+                },
               },
             },
           },
@@ -53,7 +65,7 @@ export default async function PlayPage({
   if (!question) notFound();
   const reveals = await db.clueReveal.findMany({
     where: { attemptId: attempt.id, questionId: question.id },
-    include: { clue: true },
+    select: { id: true, clue: { select: { text: true } } },
     orderBy: { revealedAt: "asc" },
   });
   const nextClueAvailable = reveals.length < question.clues.length;

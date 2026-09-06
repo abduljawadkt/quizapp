@@ -12,7 +12,16 @@ export default async function QuestionsPage({ searchParams }: { searchParams?: P
     db.quizSet.findMany({ orderBy: { createdAt: "asc" } }),
     db.question.findMany({
       orderBy: [{ quizSetId: "asc" }, { sortOrder: "asc" }],
-      include: { quizSet: true, answerVariants: true, clues: { orderBy: { sortOrder: "asc" } } },
+      select: {
+        id: true,
+        prompt: true,
+        points: true,
+        active: true,
+        correctDisplayMl: true,
+        quizSet: { select: { title: true } },
+        answerVariants: { select: { value: true, language: true } },
+        clues: { orderBy: { sortOrder: "asc" }, select: { id: true } },
+      },
     }),
   ]);
 

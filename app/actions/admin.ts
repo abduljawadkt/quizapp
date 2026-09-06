@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { clearAdminSession, createAdminSession, requireAdmin, verifyAdminPassword } from "@/lib/auth";
@@ -200,6 +200,7 @@ export async function createEvent(formData: FormData) {
     data: { adminId: admin.id, action: "event.create", entity: "event", entityId: event.id },
   });
 
+  revalidateTag("events", "max");
   revalidatePath("/admin");
   redirect(`/admin/events/${event.id}`);
 }
@@ -216,6 +217,7 @@ export async function updateEventStatus(formData: FormData) {
     data: { adminId: admin.id, action: `event.${status}`, entity: "event", entityId: eventId },
   });
 
+  revalidateTag("events", "max");
   revalidatePath("/admin");
   revalidatePath(`/admin/events/${eventId}`);
   redirect(`${returnTo}?updated=status`);
@@ -243,6 +245,7 @@ export async function updateEventSettings(formData: FormData) {
     data: { adminId: admin.id, action: "event.update", entity: "event", entityId: data.eventId },
   });
 
+  revalidateTag("events", "max");
   revalidatePath("/admin");
   revalidatePath(`/admin/events/${data.eventId}`);
   redirect(`/admin/events/${data.eventId}?updated=settings`);

@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -13,18 +14,26 @@ const joinSchema = z.object({
 async function getAttemptWithGame(attemptId: string) {
   return db.attempt.findUnique({
     where: { id: attemptId },
-    include: {
-      participant: true,
+    select: {
+      id: true,
+      status: true,
+      currentIndex: true,
+      score: true,
       event: {
-        include: {
+        select: {
           quizSet: {
-            include: {
+            select: {
               questions: {
                 where: { active: true },
                 orderBy: { sortOrder: "asc" },
-                include: {
-                  answerVariants: true,
-                  clues: { orderBy: { sortOrder: "asc" } },
+                select: {
+                  id: true,
+                  points: true,
+                  answerVariants: { select: { normalized: true } },
+                  clues: {
+                    orderBy: { sortOrder: "asc" },
+                    select: { id: true, penalty: true },
+                  },
                 },
               },
             },
@@ -41,11 +50,11 @@ export async function joinEvent(formData: FormData) {
 
   const event = await db.event.findUnique({
     where: { joinCode: parsed.data.code.toUpperCase().trim() },
-    include: { participants: true },
+    include: { _count: { select: { participants: true } } },
   });
 
   if (!event || event.status !== "open") redirect(`/?error=closed&code=${parsed.data.code}`);
-  if (event.participants.length >= event.maxParticipants) redirect(`/?error=full&code=${event.joinCode}`);
+  if (event._count.participants >= event.maxParticipants) redirect(`/?error=full&code=${event.joinCode}`);
 
   const participant = await db.participant.create({
     data: {
@@ -56,6 +65,7 @@ export async function joinEvent(formData: FormData) {
     include: { attempts: true },
   });
 
+  revalidateTag("events", "max");
   redirect(`/play/${participant.attempts[0].id}`);
 }
 

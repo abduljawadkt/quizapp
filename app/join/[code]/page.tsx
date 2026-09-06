@@ -2,14 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, Home, KeyRound, Lock, Sparkles, Users } from "lucide-react";
 import { joinEvent } from "@/app/actions/play";
-import { db } from "@/lib/db";
+import { getJoinEvent } from "@/lib/publicData";
 
 export default async function JoinCodePage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
-  const event = await db.event.findUnique({
-    where: { joinCode: code.toUpperCase() },
-    include: { quizSet: { include: { questions: { where: { active: true } } } }, _count: { select: { participants: true } } },
-  });
+  const event = await getJoinEvent(code);
 
   if (!event) notFound();
   const isOpen = event.status === "open" && event._count.participants < event.maxParticipants;
@@ -19,7 +16,7 @@ export default async function JoinCodePage({ params }: { params: Promise<{ code:
       <div className="topbar">
         <div className="brand">
           <strong>{event.title}</strong>
-          <span>{event.quizSet.title} · {event.quizSet.questions.length} chests</span>
+          <span>{event.quizSet.title} · {event.quizSet._count.questions} chests</span>
         </div>
         <div className="nav"><Link href="/"><Home size={16} /> Home</Link></div>
       </div>

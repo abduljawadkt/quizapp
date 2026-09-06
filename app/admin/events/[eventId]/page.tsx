@@ -21,19 +21,45 @@ export default async function EventDetailPage({
   const [event, quizSets] = await Promise.all([
     db.event.findUnique({
       where: { id: eventId },
-      include: {
-        quizSet: { include: { questions: { where: { active: true } } } },
-        participants: { orderBy: { createdAt: "asc" } },
+      select: {
+        id: true,
+        title: true,
+        quizSetId: true,
+        joinCode: true,
+        status: true,
+        maxParticipants: true,
+        showAnswers: true,
+        quizSet: {
+          select: {
+            title: true,
+            _count: { select: { questions: { where: { active: true } } } },
+          },
+        },
         attempts: {
           orderBy: { startedAt: "desc" },
-          include: {
-            participant: true,
+          select: {
+            id: true,
+            status: true,
+            score: true,
+            startedAt: true,
+            participant: { select: { name: true } },
             responses: {
               orderBy: { questionIndex: "asc" },
-              include: { question: true },
+              select: {
+                id: true,
+                questionIndex: true,
+                answerText: true,
+                answerLanguage: true,
+                skipped: true,
+                autoCorrect: true,
+                manualCorrect: true,
+                pointsAwarded: true,
+                question: { select: { prompt: true } },
+              },
             },
           },
         },
+        _count: { select: { participants: true } },
       },
     }),
     db.quizSet.findMany({ orderBy: { createdAt: "asc" } }),
@@ -57,8 +83,8 @@ export default async function EventDetailPage({
           <h1>{event.joinCode}</h1>
           <div className="row" style={{ marginBottom: 14 }}>
             <span className={`pill ${event.status}`}>{event.status}</span>
-            <span className="pill"><Users size={14} /> {event.participants.length}/{event.maxParticipants}</span>
-            <span className="pill"><Star size={14} /> {event.quizSet.questions.length} questions</span>
+            <span className="pill"><Users size={14} /> {event._count.participants}/{event.maxParticipants}</span>
+            <span className="pill"><Star size={14} /> {event.quizSet._count.questions} questions</span>
           </div>
           <div className="row">
             <Link className="button primary" href={joinUrl}><ExternalLink size={16} /> Open join page</Link>
@@ -149,7 +175,7 @@ export default async function EventDetailPage({
                       <td>{attempt.participant.name}</td>
                       <td><span className={`pill ${attempt.status === "completed" ? "open" : ""}`}>{attempt.status}</span></td>
                       <td><strong className="points-value">{attempt.score}</strong></td>
-                      <td>{attempt.responses.length}/{event.quizSet.questions.length}</td>
+                      <td>{attempt.responses.length}/{event.quizSet._count.questions}</td>
                     </tr>
                   ))}
                 </tbody>

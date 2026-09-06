@@ -8,17 +8,41 @@ export default async function ResultPage({ params }: { params: Promise<{ attempt
   const { attemptId } = await params;
   const attempt = await db.attempt.findUnique({
     where: { id: attemptId },
-    include: {
-      participant: true,
+    select: {
+      id: true,
+      score: true,
+      participant: { select: { name: true } },
       event: {
-        include: {
-          attempts: { include: { participant: true }, where: { status: "completed" } },
-          quizSet: true,
+        select: {
+          title: true,
+          joinCode: true,
+          showAnswers: true,
+          attempts: {
+            where: { status: "completed" },
+            select: { id: true, score: true, startedAt: true, participant: { select: { name: true } } },
+          },
         },
       },
       responses: {
         orderBy: { questionIndex: "asc" },
-        include: { question: true },
+        select: {
+          id: true,
+          questionIndex: true,
+          answerText: true,
+          skipped: true,
+          autoCorrect: true,
+          manualCorrect: true,
+          pointsAwarded: true,
+          question: {
+            select: {
+              prompt: true,
+              points: true,
+              correctDisplayEn: true,
+              correctDisplayAr: true,
+              correctDisplayMl: true,
+            },
+          },
+        },
       },
     },
   });
@@ -26,7 +50,7 @@ export default async function ResultPage({ params }: { params: Promise<{ attempt
   if (!attempt) notFound();
   const total = attempt.responses.reduce((sum, response) => sum + response.question.points, 0);
   const pct = total ? Math.round((attempt.score / total) * 100) : 0;
-  const leaderboard = attempt.event.attempts.slice().sort((a, b) => b.score - a.score);
+  const leaderboard = attempt.event.attempts.slice().sort((a, b) => b.score - a.score || a.startedAt.getTime() - b.startedAt.getTime());
 
   return (
     <main className="shell">
